@@ -1,0 +1,3 @@
+# Runtime only. Python 3.10+ with Tk and FFmpeg/FFprobe installed separately.
+Pillow>=10.4,<13
+numpy>=1.26,<3

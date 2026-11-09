@@ -1,0 +1,1 @@
+First Light: original procedurally authored textures and synthesised audio created for this prototype. You may use and remix these demo assets. No font files are bundled. The first clip is locked; title clips are manually protected. Try new seeds without changing those parts.

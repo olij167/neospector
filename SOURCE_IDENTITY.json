@@ -1,0 +1,9 @@
+{
+  "product": "Neospector",
+  "version": "0.7.25-ux41",
+  "source_baseline": "Neospector_UX40_Module_Editing_20261109.zip",
+  "source_sha256": "b39c6b6b1810f0dae331a986be3024ef18cda29eebb702ba4024e057c486feed",
+  "approved_spec": "Fix per-parameter reaction slider, expose module master source/band beside React All, and add timed A/B ping-pong with Hold/Fade while preserving performance and owner update security.",
+  "project_compatibility": "Project format 1.3.0 remains unchanged; ux41_pingpong is an optional extra field readable by UX41. Older readers can ignore the unknown setting.",
+  "perf_scope": "One module routing transaction per click; no polling timer for ping-pong and no rack relayout per reaction drag. Input latency preserved."
+}

@@ -1,0 +1,14 @@
+{
+  "payload": {
+    "schema": 1,
+    "product": "Neospector",
+    "channel": "stable",
+    "platform": "linux-x86_64",
+    "version": "0.7.25-ux41",
+    "archive": "Neospector_UX41_Final_Reactions_PingPong_20261109.zip",
+    "sha256": "5ca7ad615db8cf45c53aaba4611f12f08542e099e099bd7ce8aeae23822358f5",
+    "bytes": 29088284,
+    "notes": "UX41 final audiovisual instrument refinement: reliable per-parameter audio reaction depth, module-wide reaction routing, automatic A/B ping-pong with independent hold/fade durations, and retained UI responsiveness. Linux x86-64 Xorg evaluation release."
+  },
+  "signature": "V+Kl0dMqjwWoRf96LXFAOnXKtARfPSZhs58fhyaUwVkNiRbqTgJoPN/fGmwf7UZBUNYyKe+2OV/8MjSxQvNHCw=="
+}

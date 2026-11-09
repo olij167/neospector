@@ -1,0 +1,116 @@
+name: Neospector UX41 native installer candidates
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: neospector-native-ux41-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-and-web:
+    name: Verify signed UX41 and GitHub-backed Worker
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Fetch published immutable UX41 archive
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p source
+          gh release download v0.7.25-ux41 -R "$GITHUB_REPOSITORY" -p Neospector_UX41_Final_Reactions_PingPong_20261109.zip -D source
+      - name: Verify source, signature, distribution contracts and web routes
+        run: |
+          python scripts/verify_publication.py
+          python -m unittest discover -s tests -p test_distribution.py -v
+          node --test tests/github_worker.test.mjs
+          bash -n native/build_linux_deb.sh native/build_macos.sh scripts/publish_first_release.sh
+  linux-x64:
+    needs: source-and-web
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Fetch accepted UX41 archive
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p source
+          gh release download v0.7.25-ux41 -R "$GITHUB_REPOSITORY" -p Neospector_UX41_Final_Reactions_PingPong_20261109.zip -D source
+      - run: bash native/build_linux_deb.sh
+      - run: |
+          dpkg-deb -f artifacts/Neospector_0.7.25-ux41_linux-x64.deb Package Version Architecture
+          sha256sum -c artifacts/Neospector_0.7.25-ux41_linux-x64.deb.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-ux41-linux-x64-deb-CANDIDATE
+          path: artifacts/Neospector_0.7.25-ux41_linux-x64.deb*
+          if-no-files-found: error
+  windows-x64:
+    needs: source-and-web
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Fetch accepted UX41 archive
+        shell: pwsh
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          New-Item -Force -ItemType Directory source | Out-Null
+          gh release download v0.7.25-ux41 -R $env:GITHUB_REPOSITORY -p Neospector_UX41_Final_Reactions_PingPong_20261109.zip -D source
+          if ($LASTEXITCODE -ne 0) { throw 'Release download failed' }
+      - name: Install FFmpeg and Inno Setup
+        shell: pwsh
+        run: |
+          choco install ffmpeg --yes --no-progress
+          choco install innosetup --yes --no-progress
+          $env:PATH += ';C:\ProgramData\chocolatey\bin'
+      - name: Build Windows Setup and portable ZIP (NOT code signed)
+        shell: pwsh
+        run: .\native\build_windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-ux41-windows-x64-CANDIDATE-UNSIGNED
+          path: artifacts/Neospector_0.7.25-ux41_windows-x64_*
+          if-no-files-found: error
+  macos-arm64:
+    needs: source-and-web
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Fetch accepted UX41 archive
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p source
+          gh release download v0.7.25-ux41 -R "$GITHUB_REPOSITORY" -p Neospector_UX41_Final_Reactions_PingPong_20261109.zip -D source
+      - run: brew install ffmpeg
+      - run: bash native/build_macos.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-ux41-macos-arm64-CANDIDATE-UNNOTARISED
+          path: artifacts/Neospector_0.7.25-ux41_macos-arm64.*
+          if-no-files-found: error
+  macos-intel:
+    needs: source-and-web
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Fetch accepted UX41 archive
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          mkdir -p source
+          gh release download v0.7.25-ux41 -R "$GITHUB_REPOSITORY" -p Neospector_UX41_Final_Reactions_PingPong_20261109.zip -D source
+      - run: brew install ffmpeg
+      - run: bash native/build_macos.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-ux41-macos-x64-CANDIDATE-UNNOTARISED
+          path: artifacts/Neospector_0.7.25-ux41_macos-x64.*
+          if-no-files-found: error

@@ -1,0 +1,2 @@
+# Optional only: Windows device-loopback capture. Core app does not require it.
+SoundCard>=0.4.3,<0.5

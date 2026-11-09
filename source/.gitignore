@@ -1,0 +1,2 @@
+# Immutable release ZIPs belong in GitHub Releases, not the source repository.
+*.zip

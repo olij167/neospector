@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "product": "Neospector",
+  "version": "0.7.25-ux41",
+  "date": "2026-11-09",
+  "publication_note": "Linux UX41 verified; native installer candidates not yet released",
+  "downloads": {
+    "linux-zip": {
+      "ready": true,
+      "key": "neospector/updates/Neospector_UX41_Final_Reactions_PingPong_20261109.zip",
+      "sha256": "5ca7ad615db8cf45c53aaba4611f12f08542e099e099bd7ce8aeae23822358f5",
+      "bytes": 29088284
+    },
+    "linux": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    },
+    "windows-x64": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    },
+    "macos-arm64": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    },
+    "macos-x64": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    },
+    "windows-x64-portable": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    },
+    "macos-arm64-pkg": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    },
+    "macos-x64-pkg": {
+      "ready": false,
+      "key": null,
+      "sha256": null,
+      "bytes": null
+    }
+  }
+}

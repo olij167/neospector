@@ -1,0 +1,12 @@
+{
+  "format": "neospector/module-recipe",
+  "version": 1,
+  "name": "Custom Pixel Gate",
+  "family": "Transition",
+  "tags": ["reveal", "pixel", "custom"],
+  "operations": [
+    {"kind": "transition_timing", "params": {"start": 0.08, "end": 0.92, "curve": 0.25, "smooth": 0.3}},
+    {"kind": "transition_pixels", "params": {"cell": 28, "randomness": 0.95, "softness": 0.03}},
+    {"kind": "chroma_shift", "params": {"amount": 0.12}}
+  ]
+}

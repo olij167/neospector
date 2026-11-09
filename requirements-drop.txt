@@ -1,0 +1,2 @@
+# Optional native desktop-file drop support. No drivers or routing changes.
+tkinterdnd2>=0.4.2,<0.5

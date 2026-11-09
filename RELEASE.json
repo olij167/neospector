@@ -1,0 +1,16 @@
+{
+  "product": "Neospector",
+  "version": "0.7.25-ux41",
+  "release": "UX41 · Stable reaction controls and A/B ping-pong · Linux Xorg candidate",
+  "status": "UX41_EVALUATION_CANDIDATE",
+  "date": "2026-11-09",
+  "entry": "app_source/neospector.py",
+  "project_format": "1.3.0",
+  "private_environment": ".runtime-neospector-omne-r5",
+  "linux_native_profile": "Xorg x86-64 · bundled TkDnD 2.9.5 and FFmpeg x11grab",
+  "wayland_portal_capture": "UNAVAILABLE",
+  "native_windows_macos_capture": "UNQUALIFIED",
+  "physical_owner_acceptance": "PENDING",
+  "acceptance": "tools/verify_ux41.py",
+  "notes": "Stable signed reaction-depth drag, signed percentage readout, one-transaction module source/band selection, deterministic A/B ping-pong (Hold/Fade) in preview/export; UX40 fader, themes, and UX39 latency optimisations retained. Owner companion untouched. Workstation capture/record/export pending."
+}

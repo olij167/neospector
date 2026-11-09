@@ -1,0 +1,9 @@
+# UX40 · Module control reliability and theme parity
+
+- **Root cause:** `tk.Scale` defers its command callback, so the last slider position could be lost when release cleared the active gesture first. `ParameterFader` now writes the thumb's final value before ending the undo gesture. Numeric edits deliberately bypass scale quantisation.
+- **Entry focus:** Numeric entries commit on Return or valid focus loss. Focus loss *during* a slider press does not cancel that new gesture. Invalid and non-finite values are rejected; step/switch controls round to integral values.
+- **Animated parameters:** Front panels display `animated_value` at the edit playhead for keyed parameters, not stale `param.value`. Authored keys are preserved instead of converting an animation to a static value.
+- **React All:** A compact ∿ ALL control uses one project transaction per module; individual source/band/depth strips remain. When all are reacting it reads ∿ ALL ●; partial reaction reads ∿ MIX. Turning it off restores keyed parameters to Animate and others to Static. Group macros participate. The existing transaction refresh suffices; no second forced refresh.
+- **Remove:** The × control is in the top header immediately right of LOCK; the bottom strip retains Duplicate, Reset, Vary and reorder. No additional toolbars or popups.
+- **Theme parity:** UX19/20/28 styles now resolve through the current palette. Read-only Comboboxes, future native popup menus, existing native popup menus and already-created Combobox listboxes are recoloured when the user changes theme; module-family faceplate accents stay intentional.
+- **Performance:** Retain UX39 coalesced parameter notifications, no media/queue refresh per intermediate motion value, and stable card objects. New checks cover rapid edits and original UX39 gate.

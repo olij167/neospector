@@ -1,0 +1,13 @@
+config.log
+config.status
+pkgIndex.tcl
+Makefile
+autom4te.cache
+cmake/debug-nmake-x86_64/
+cmake/release-nmake-x86_64/
+cmake/runtime/
+*.o
+*.so
+*.dylib
+*.swp
+.DS_Store

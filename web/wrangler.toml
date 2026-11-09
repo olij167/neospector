@@ -1,0 +1,10 @@
+name = "omne-neospector-downloads"
+main = "worker.mjs"
+compatibility_date = "2026-11-09"
+workers_dev = false
+# This Worker is PUBLIC-RELEASE-ONLY: no R2, API credentials, or private key.
+# Confirm these two paths are not already assigned to another Worker before deployment.
+routes = [
+  { pattern = "omne.space/downloads/neospector*", zone_name = "omne.space" },
+  { pattern = "omne.space/neospector/updates/*", zone_name = "omne.space" }
+]

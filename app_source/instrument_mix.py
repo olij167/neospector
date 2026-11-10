@@ -33,7 +33,8 @@ class VisualMixStrip(ttk.Frame):
         self.tools=ttk.Frame(self);self.tools.pack(fill='x')
         self.mix_controls=ttk.Frame(self.tools)
         self.transition_group=ttk.Frame(self.mix_controls)
-        ttk.Label(self.transition_group,text='TRANSITION',style='UX20.ToolLabel.TLabel').pack(side='left',padx=(1,5))
+        self.transition_label=ttk.Label(self.transition_group,text='TRANSITION',style='UX20.ToolLabel.TLabel')
+        self.transition_label.pack(side='left',padx=(1,5))
         self.previous_transition=ttk.Button(self.transition_group,text='‹',width=2,style='UX20.Small.TButton',command=lambda:self.step_transition(-1))
         # Preset arrows removed: animation is authored in Transition FX rack.
         self.transition_display=ttk.Button(self.transition_group,text='✧ Edit motion',width=14,style='UX20.Transition.TButton',command=self.open_transition_menu)
@@ -126,7 +127,13 @@ class VisualMixStrip(ttk.Frame):
         # Action area on the left, one cohesive mix-control cluster on the
         # right. The right cluster wraps intact instead of overflowing when
         # an effects or sources workbench narrows the preview.
-        mode=2 if width<430 else 1 if width<760 else 0
+        # The label costs ~85px yet carries no action. Eliminate it *before*
+        # any actual control is compressed; keep transition buttons accessible.
+        if width<950 and self.transition_label.winfo_manager():
+            self.transition_label.pack_forget()
+        elif width>=950 and not self.transition_label.winfo_manager():
+            self.transition_label.pack(side='left',before=self.transition_display,padx=(1,5))
+        mode=2 if width<470 else 1 if width<850 else 0
         if mode==self._compact:return
         self._compact=mode
         self.transition_group.pack_forget();self.audio_group.pack_forget()

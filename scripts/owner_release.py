@@ -52,8 +52,15 @@ def check_git_and_live(version):
     remote=cmd('git','remote','get-url','origin')
     if not re.search(r'(?:github\.com[:/])olij167/neospector(?:\.git)?$',remote):
         raise ReleaseBlocked('Git origin is not the expected Neospector GitHub repository')
-    if cmd('git','status','--porcelain','--untracked-files=no'):
-        raise ReleaseBlocked('Commit tracked source changes first (working tree is not clean)')
+    # GitHub release assets are built from the pushed SHA. Unrelated local
+    # generated files and release-tool backups must not block publication.
+    release_inputs=('app_source','native','scripts','web','tests','vendor',
+                    '.github/workflows','requirements.txt','requirements-drop.txt',
+                    'requirements-loopback-windows.txt')
+    dirty=cmd('git','diff','HEAD','--name-only','--',*release_inputs).splitlines()
+    if dirty:
+        raise ReleaseBlocked('Uncommitted release inputs: '+', '.join(dirty[:6])+
+                             '. Use Prepare & Push before publishing.')
     head=cmd('git','rev-parse','HEAD')
     if not re.fullmatch('[0-9a-f]{40}',head):raise ReleaseBlocked('Invalid Git commit identity')
     cmd('gh','auth','status')

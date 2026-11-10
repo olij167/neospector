@@ -6,6 +6,9 @@ from pathlib import Path
 DENY_PARTS={'tests','tools','web','.git','.github','.runtime-neospector-omne-r5',
     'evidence','examples','docs','scripts','build-work','artifacts','__pycache__'}
 DENY_EXTS={'.zip','.md','.pyc','.pyo','.pem.key','.pfx','.p12'}
+# PyInstaller's bundled Python stdlib is runtime code, not a source archive.
+# This is the only ZIP location allowed in the native Linux installer.
+FROZEN_STDLIB_ZIP='./opt/neospector/_internal/base_library.zip'
 class ShippingError(RuntimeError):pass
 
 def verify_deb(path):
@@ -16,14 +19,21 @@ def verify_deb(path):
     entries=[]
     for line in result.stdout.splitlines():
         if not line.strip():continue
-        name=line.split()[-1]
+        fields=line.split(maxsplit=5)
+        if len(fields)!=6:raise ShippingError('Unparseable DEB entry')
+        name=fields[5].split(' -> ',1)[0]
         if name.endswith('/'):continue
         entries.append(name)
         parts=set(Path(name).parts)
         # The frozen runtime may contain a `tools/` folder holding required
         # ffmpeg binaries: inspect the actual location rather than blanket ban.
         if parts & (DENY_PARTS-{'tools'}):raise ShippingError('Developer directory in installer: '+name)
-        if name.endswith(tuple(DENY_EXTS)):raise ShippingError('Developer file in installer: '+name)
+        if name.endswith(tuple(DENY_EXTS)):
+            # The stdlib ZIP is allowed only as a regular file at the exact
+            # PyInstaller runtime path; a similarly named archive elsewhere
+            # (or a symlink) is still rejected.
+            if not (name==FROZEN_STDLIB_ZIP and fields[0].startswith('-')):
+                raise ShippingError('Developer file in installer: '+name)
         if name.startswith('./opt/neospector/tools/') and not name.endswith(('ffmpeg','ffprobe','ffplay')):
             raise ShippingError('Unexpected updater/build tool in runtime: '+name)
     if not any(x.endswith('/opt/neospector/Neospector') for x in entries):raise ShippingError('Native app missing')

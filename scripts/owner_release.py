@@ -13,6 +13,7 @@ sys.path.insert(0,str(ROOT/'app_source'))
 sys.path.insert(0,str(ROOT/'scripts'))
 from installer_updates import platform_id,sign_release,verify_release,validate_release
 from signed_updates import version_tuple, UpdateError
+from owner_site_http import site_bytes, site_json
 REPO='olij167/neospector'
 ALIAS_FLAGS={'linux-x64':'linux','windows-x64':'windows','macos-arm64':'macos_arm64','macos-x64':'macos_x64'}
 CATALOGUE=ROOT/'web/releases.json'
@@ -70,11 +71,9 @@ def check_git_and_live(version):
     if head!=remote_head:raise ReleaseBlocked('Current main commit has not been pushed to GitHub')
     live=json.loads(CATALOGUE.read_text())
     # Prevent publishing against stale local website metadata.
-    from urllib.request import urlopen
     try:
-        with urlopen('https://omne.space/downloads/neospector/releases.json',timeout=12) as response:
-            public=json.loads(response.read(65537))
-    except (OSError,ValueError) as exc:raise ReleaseBlocked('Live website catalogue could not be checked') from exc
+        public=site_json('/downloads/neospector/releases.json',timeout=12,max_bytes=65536)
+    except (OSError,ValueError) as exc:raise ReleaseBlocked('Live website catalogue could not be checked: '+str(exc)) from exc
     if public.get('version')!=live.get('version'):
         raise ReleaseBlocked('Local release catalogue is not synchronized with live omne.space')
     if live.get('schema')!=1 or live.get('product')!='Neospector':raise ReleaseBlocked('Invalid live release catalogue')
@@ -235,9 +234,8 @@ def publish(args):
             cmd(sys.executable,ROOT/'scripts/sync_release_data.py')
             cmd('wrangler','deploy',cwd=ROOT/'web',timeout=200)
             # Live verification is mandatory. Asset routes are immutable by tag.
-            from urllib.request import urlopen
             def get(path):
-                with urlopen('https://omne.space'+path,timeout=15) as resp:return resp.read(100000)
+                return site_bytes(path,timeout=15,max_bytes=100000)
             live=json.loads(get('/neospector/updates/installers.json'))
             if verify_release(live,PUBLIC)!=plan['payload']:raise ReleaseBlocked('Live signed feed differs')
             website=json.loads(get('/downloads/neospector/releases.json'))

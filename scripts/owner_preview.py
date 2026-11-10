@@ -13,7 +13,7 @@ import re
 import sys
 import tempfile
 from pathlib import Path
-from urllib.request import Request, urlopen
+from owner_site_http import site_json
 
 from owner_release import ROOT, CATALOGUE, REPO, cmd, source_version, check_git_and_live, verified_ci_assets, ReleaseBlocked
 
@@ -114,8 +114,7 @@ def preview_publication(repo, version, title, notes, bundle_file, *, publish=Fal
             CATALOGUE.write_text(json.dumps(catalogue,indent=2)+'\n')
             cmd(sys.executable,repo/'scripts/sync_release_data.py')
             cmd('wrangler','deploy',cwd=repo/'web',timeout=220)
-            with urlopen('https://omne.space/downloads/neospector/releases.json',timeout=18) as r:
-                live=json.loads(r.read(65536))
+            live=site_json('/downloads/neospector/releases.json',timeout=18,max_bytes=65536)
             if (live.get('version')!=version or live.get('release_stage')!='public-test'
                     or live.get('preview_tag')!=tag or
                     not all(live['downloads'].get(alias,{}).get('ready') for alias in ALIASES.values())):

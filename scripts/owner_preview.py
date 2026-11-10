@@ -32,7 +32,7 @@ def public_test_catalogue(version, title, notes, git_info, assets):
     data.update(version=version, title=title.strip(), notes=notes.strip(), date=date,
                 commit=git_info['commit'], release_stage='public-test',
                 preview_tag='v' + version,
-                publication_note='v1.0 public test release · installers need platform user testing',
+                publication_note=f'{version} public test release · installers need platform user testing',
                 signed_auto_updates=False)
     history = data.get('history') or []
     data['history'] = [dict(version=version, title=title.strip(), notes=notes.strip(),
@@ -59,7 +59,7 @@ def preview_publication(repo, version, title, notes, bundle_file, *, publish=Fal
         # source scripts run from user's checkout, not a copied working directory
         raise ReleaseBlocked('Publisher scripts must run from the active project checkout')
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
-        raise ReleaseBlocked('First public release must use a stable version like 1.0.0')
+        raise ReleaseBlocked('Use a stable version like 1.0.0')
     if not 1 <= len(title.strip()) <= 140 or not 1 <= len(notes.strip()) <= 8000:
         raise ReleaseBlocked('Version name and update notes are required')
     if source_version() != version:
@@ -95,7 +95,7 @@ def preview_publication(repo, version, title, notes, bundle_file, *, publish=Fal
             'This build has not been verified on the owner\'s Windows/macOS devices. '
             'Do not disable operating-system protections.\n\n' + notes, encoding='utf-8')
         cmd('gh','release','create',tag,'-R',REPO,'--target',git_info['commit'],
-            '--title','Neospector v1.0 · Public testing', '--notes-file',notes_file,
+            '--title',f'Neospector {version} · Public testing', '--notes-file',notes_file,
             '--draft','--prerelease','--latest=false',timeout=180)
         upload=[p for x in assets.values() for p in (x['_path'], x['_path']+'.sha256')]
         cmd('gh','release','upload',tag,*upload,'-R',REPO,timeout=400)

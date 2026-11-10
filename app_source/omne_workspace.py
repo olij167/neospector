@@ -1483,12 +1483,32 @@ class OmneWorkspace(CompositionQueueActions,MediaPlacementActions,ChannelCameraA
         row=self.top_row
         width=event.width if event is not None else row.winfo_width()
         if width<=1:return
-        left=max(330,self.global_toolbar.winfo_reqwidth())
-        right=self.top_source_host.winfo_reqwidth()
-        available=max(1,width-left-right-22)
+        # PriorityToolbar places its controls and consequently reports a tiny
+        # requested width. Grid's old 330px floor could be smaller than the
+        # *actual* pinned buttons on a different Tk font/DPI (GitHub CI).
+        # Measure what must stay visible, including gutters, instead of
+        # relying on the frame's winfo_reqwidth().
+        pinned=[item['widget'] for item in self.global_toolbar.items
+                if item['pinned'] and item.get('available',True)]
+        left=max(330,sum(max(1,w.winfo_reqwidth()) for w in pinned)
+                 +self.global_toolbar.gap*max(0,len(pinned)-1)+8)
+        row.columnconfigure(0,minsize=left)
+        right=max(1,self.top_source_host.winfo_reqwidth())
+        # Both edge groups are protected. At very small window sizes the
+        # sources group goes beneath the mixer instead of covering buttons.
+        wrap_sources=(width<left+right+22)
+        if wrap_sources:
+            source_grid={'row':2,'column':0,'columnspan':3,'sticky':'e',
+                         'padx':(5,1),'pady':(2,0)}
+            available=max(1,width-left-22)
+        else:
+            source_grid={'row':0,'column':2,'columnspan':1,'sticky':'e',
+                         'padx':(5,1),'pady':(0,0)}
+            available=max(1,width-left-right-22)
+        self.top_source_host.grid_configure(**source_grid)
         # A mixer on one line needs enough room for record/output/focus and
         # at least one row of transition controls. Otherwise wrap below.
-        stacked=(available<510)
+        stacked=wrap_sources or available<510
         if stacked:
             config={'row':1,'column':0,'columnspan':3,'sticky':'ew','padx':(1,1),'pady':(2,0)}
             mix_width=max(300,width-12)
@@ -1496,7 +1516,7 @@ class OmneWorkspace(CompositionQueueActions,MediaPlacementActions,ChannelCameraA
             config={'row':0,'column':1,'columnspan':1,'sticky':'ew','padx':(4,5),'pady':(0,0)}
             mix_width=available
         last=getattr(self,'_ux43_performance_layout',None)
-        current=(stacked,int(mix_width//8))
+        current=(stacked,wrap_sources,left,int(mix_width//8))
         if current==last:return
         self._ux43_performance_layout=current
         self.visual_mix.grid_configure(**config)

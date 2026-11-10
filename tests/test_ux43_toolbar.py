@@ -31,3 +31,32 @@ class ProtectedToolbar(unittest.TestCase):
                         if 1280<=width<=1460:self.assertFalse(app.visual_mix.transition_label.winfo_manager())
                         self.assertLessEqual(app.media_sources_button.winfo_rootx()+app.media_sources_button.winfo_width(),app.top_source_host.winfo_rootx())
             finally:app.close(force=True)
+
+    def test_protected_regions_with_larger_font_metric_button_requests(self):
+        """Placed controls still occupy a real width when Tk's font grows.
+
+        A PriorityToolbar's *container* may request 1px because it places
+        children. Test with larger child widths to emulate CI/OS differences.
+        """
+        with tempfile.TemporaryDirectory() as d,patch.dict(os.environ,{'OMNE_SEQUENCER_SANDBOX':d,'NEOSPECTOR_NO_NATIVE_DROP':'1'}):
+            from neospector_console import NeospectorApp
+            app=NeospectorApp(test_mode=True)
+            try:
+                app.media_sources_button.configure(width=24)
+                app.master_fx_button.configure(width=12)
+                for width in (860,1024,1280,1380,1460,1600,1920):
+                    with self.subTest(width=width):
+                        app.geometry(f'{width}x900+0+0')
+                        for _ in range(7):app.update()
+                        left=(app.media_sources_button.winfo_rootx()+app.media_sources_button.winfo_width())
+                        # Pinned controls must fit their *own* grid column;
+                        # the old 330px constant fails this on larger fonts.
+                        self.assertLessEqual(left,app.global_toolbar.winfo_rootx()+app.global_toolbar.winfo_width()+1)
+                        source_left=app.top_source_host.winfo_rootx()
+                        if abs(app.media_sources_button.winfo_rooty()-app.top_source_host.winfo_rooty())<app.media_sources_button.winfo_height():
+                            self.assertLessEqual(left,source_left+1)
+                        self.assertLessEqual(left,app.winfo_rootx()+app.winfo_width()+2)
+                        self.assertLessEqual(app.top_source_host.winfo_rootx()+app.top_source_host.winfo_width(),app.winfo_rootx()+app.winfo_width()+3)
+                        if 1280<=width<=1460:
+                            self.assertFalse(app.visual_mix.transition_label.winfo_manager())
+            finally:app.close(force=True)

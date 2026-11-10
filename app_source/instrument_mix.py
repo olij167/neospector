@@ -129,9 +129,14 @@ class VisualMixStrip(ttk.Frame):
         # an effects or sources workbench narrows the preview.
         # The label costs ~85px yet carries no action. Eliminate it *before*
         # any actual control is compressed; keep transition buttons accessible.
-        if width<950 and self.transition_label.winfo_manager():
+        # A stacked mixer can be wider than the original viewport. Retain
+        # the visual priority rule: the redundant caption stays hidden on
+        # small overall windows even when the mixer uses its own full row.
+        viewport_width=self.app.top_row.winfo_width() if hasattr(self.app,'top_row') else width
+        show_caption=width>=950 and viewport_width>=1500
+        if not show_caption and self.transition_label.winfo_manager():
             self.transition_label.pack_forget()
-        elif width>=950 and not self.transition_label.winfo_manager():
+        elif show_caption and not self.transition_label.winfo_manager():
             self.transition_label.pack(side='left',before=self.transition_display,padx=(1,5))
         mode=2 if width<470 else 1 if width<850 else 0
         if mode==self._compact:return

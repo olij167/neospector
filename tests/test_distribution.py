@@ -22,7 +22,11 @@ class DistributionTests(unittest.TestCase):
     def test_catalogue_keeps_native_artifacts_unpublished(self):
         c=json.loads((ROOT/'web/releases.json').read_text())
         self.assertTrue(c['downloads']['linux-zip']['ready'])
-        for k in ('linux','windows-x64','macos-arm64','macos-x64','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg'):self.assertFalse(c['downloads'][k]['ready'])
+        linux=c['downloads']['linux']
+        self.assertTrue(linux['ready'])
+        self.assertEqual(linux['key'],'neospector/releases/Neospector_0.7.25-ux41_linux-x64.deb')
+        self.assertEqual(linux['sha256'],'7e01af68c16afb6d466a26be78e2b24793064984731d0db934399e75416852d3')
+        for k in ('windows-x64','macos-arm64','macos-x64','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg'):self.assertFalse(c['downloads'][k]['ready'])
     def test_native_scripts_target_accepted_entry(self):
         for file in ('build_macos.sh','build_windows.ps1'):
             text=(ROOT/'native'/file).read_text()

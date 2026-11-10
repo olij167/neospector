@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import ttk
 from workspace_shell import WorkspaceShell
 from workspace_system import WorkspaceState, panel_id
+from ux42_viewport import project_stage
 
 
 class InstrumentShell(WorkspaceShell):
@@ -175,51 +176,35 @@ class InstrumentShell(WorkspaceShell):
         self.left_open=False
         stack=self.app.sidebar
         roles=stack.stack_roles()
-        # UX25: queue geometry is always bottom-anchored. Opening a third
-        # queue never switches to a sidebar or moves existing queues upward.
-        dw=0
         browser_open=bool(stack._browser_open)
-        media_width=min(405,max(300,int(w*.285))) if browser_open else 0
-        work_width=0
-        if self.rack_open:
-            work_width=min(500,max(305,int(w*.33)))
-            work_width=min(work_width,max(260,w-dw-365-2*gap))
-        left_width=max(media_width,work_width)
-        px=left_width+gap if left_width else 0
-        pw=max(260,w-dw-px-gap*int(bool(dw)))
-        self._zone_rects={'left':(0,0,left_width,h),
-                          'centre':(px,0,pw,h),'right':(w-dw,0,dw,h) if dw else (w,0,0,h)}
+        visual_top=(max(0,self.app.viewport.canvas.winfo_rooty()-self.stage.winfo_rooty())+28
+                    if hasattr(self.app,'viewport') else 95)
+        visual_top=min(max(98,visual_top),int(h*.65))
+        browser_ideal=(stack.source_shelf.requested_height()+90) if browser_open and self.rack_open else 320
+        probe=project_stage(w,h,browser=browser_open,rack=self.rack_open,
+                            roles=roles,visual_top=visual_top,queue_height=0,
+                            browser_ideal_height=browser_ideal,gap=gap)
+        self._zone_rects={'left':(0,0,probe.left_width,h),
+                          'centre':probe.programme,'right':(w,0,0,h)}
         self._hide(self.frames['panel.queues'])
-        self._place(self.frames['panel.programme'],(px,0,pw,h))
-        if browser_open and self.rack_open:
-            browser_height=max(240,min(int(h*.57),stack.source_shelf.requested_height()+90))
-            rack_height=max(180,h-browser_height-gap)
-            self._place(self.frames['panel.rack'],(0,0,left_width,rack_height))
-            self._place(stack.browser_frame,(0,rack_height+gap,left_width,h-rack_height-gap))
-        elif browser_open:
-            # A useful full-height media/source shelf with a flexible file list;
-            # unlike a popup it never covers the output preview.
-            self._hide(self.frames['panel.rack'])
-            self._place(stack.browser_frame,(0,0,left_width,h))
-        elif self.rack_open:
-            self._hide(stack.browser_frame)
-            self._place(self.frames['panel.rack'],(0,0,left_width,h))
-        else:
-            self._hide(stack.browser_frame);self._hide(self.frames['panel.rack'])
+        self._place(self.frames['panel.programme'],probe.programme)
+        if probe.rack:self._place(self.frames['panel.rack'],probe.rack)
+        else:self._hide(self.frames['panel.rack'])
+        if probe.browser:self._place(stack.browser_frame,probe.browser)
+        else:self._hide(stack.browser_frame)
         self._hide(self.grips['rack_fraction'])
-        # One anchored right stack; A, B and Music have identical placement
-        # semantics. The entire preview becomes free when trays are closed.
+        # UX42: the same bottom-right A/B/Music stack is bounded by the actual
+        # stage. A larger monitor expands the preview rather than the controls.
         stack.dock_bar.place_forget();stack.music_dock_bar.place_forget()
         if roles:
-            aw=min(380,max(304,int(w*.305)))
-            visual_top=max(0,self.app.viewport.canvas.winfo_rooty()-self.stage.winfo_rooty()) if hasattr(self.app,'viewport') else 95
-            visual_top=min(max(98,visual_top+28),int(h*.65))
-            available=max(245,h-visual_top-2*gap-4)
-            height=stack.fit_heights(available)
-            top=max(2,h-gap-height)
-            self._place(self.frames['panel.library'],(w-aw-gap,top,aw,height))
+            height=stack.fit_heights(probe.available_queue_height)
+            plan=project_stage(w,h,browser=browser_open,rack=self.rack_open,
+                               roles=roles,visual_top=visual_top,queue_height=height,
+                               browser_ideal_height=browser_ideal,gap=gap)
+            if plan.queue:
+                self._place(self.frames['panel.library'],plan.queue)
+                self.frames['panel.library'].lift()
             self._hide(self.grips['right'])
-            self.frames['panel.library'].lift()
             stack.request_fit()
         else:
             self._hide(self.frames['panel.library'])

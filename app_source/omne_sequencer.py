@@ -59,7 +59,12 @@ class SequencerApp(FamilyChromeMixin,tk.Tk):
         self.user_themes=load_user_themes(self.user_theme_path);self.published_themes=list(PUBLISHED_THEME_ORDER);self.theme_library=copy.deepcopy(BUILTIN_THEMES);self.theme_library.update(copy.deepcopy(self.user_themes));self.available_themes=list(dict.fromkeys(self.published_themes+list(self.user_themes)))
         pref=self.read_preferences();initial=resolve_theme_preference(pref.get('theme_name'),self.user_themes,self.published_themes)
         self.ui_chrome=copy.deepcopy(self.theme_library[initial]);self.theme_name=tk.StringVar(value=initial);self.tooltips_enabled=tk.BooleanVar(value=bool(pref.get('tooltips',True)));self.show_startup=tk.BooleanVar(value=bool(pref.get('show_startup',True)));self.tip_instances=[];self.startup_window=None
-        configure_theme(self,self.ui_chrome);self.refine_widget_theme();self.geometry(pref.get('geometry','1440x940'));self.minsize(1080,740);self.title(APP+' '+VERSION)
+        configure_theme(self,self.ui_chrome);self.refine_widget_theme()
+        from ux42_viewport import startup_geometry,minimum_window_size
+        display=(self.winfo_vrootx(),self.winfo_vrooty(),self.winfo_screenwidth(),self.winfo_screenheight())
+        self.minsize(*minimum_window_size(display[2],display[3]))
+        self.geometry(startup_geometry(pref.get('geometry','1440x940'),display))
+        self.title(APP+' '+VERSION)
         self.project=Project();self.project.ensure_layer();self.history=ProjectHistory(self.project);self.project_path=None;self.dirty=False;self.revision=0;self._snapshot_revision=-1;self._snapshot=None;self._signal_revision=-1;self._signals=None
         self.playhead=0.;self.playing=False;self.play_origin=0.;self.play_started_at=0.;self.audio_process=None;self.selected_layer_id=self.project.layers[0].id;self.selected_clip_id=None;self.selected_transition_id=None;self.selected_asset_id=None
         self.record_automation=tk.BooleanVar(value=True);self.follow_playhead=tk.BooleanVar(value=True);self.selected_channel=tk.StringVar(value='A');self.gesture=None;self.gesture_time=0.;self.range_in=None;self.range_out=None;self.events=queue.Queue();self.live=LiveInputs();self.thumbnails={};self.small_thumbnails={};self.thumb_pending=set();self.thumb_queue=queue.Queue(maxsize=300);self.closing=False

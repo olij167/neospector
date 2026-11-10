@@ -33,7 +33,8 @@ from composition_queue_view import CompositionQueueActions
 
 class OmneWorkspace(CompositionQueueActions,MediaPlacementActions,ChannelCameraActions,OmneLibrary):
     def build_ui(self):
-        self.minsize(1024,768)
+        from ux42_viewport import minimum_window_size
+        self.minsize(*minimum_window_size(self.winfo_screenwidth(),self.winfo_screenheight()))
         self.live=ChannelLiveInputs();self.audio_bus.live_inputs=self.live
         prefs=migrate_preferences(self.read_preferences())
         self.recent_projects=list(prefs.get('recent_projects',[]))[:8]
@@ -149,7 +150,13 @@ class OmneWorkspace(CompositionQueueActions,MediaPlacementActions,ChannelCameraA
         self.missing_notice=ttk.Button(programme,text='',command=self.locate_missing,style='Missing.TButton')
         from instrument_mix import VisualMixStrip
         self.visual_mix=VisualMixStrip(self.top_row,self)
+        # The mixer must never dictate the minimum width of the whole toolbar.
+        # Explicit bounded request: viewport changes negotiate the actual width.
+        self.visual_mix.grid_propagate(False)
+        self.visual_mix.configure(width=240,height=76)
         self.visual_mix.grid(row=0,column=1,sticky='ew',padx=(4,5))
+        self.top_row.bind('<Configure>',self._reflow_performance_bar,add='+')
+        self.top_row.after_idle(self._reflow_performance_bar)
         # UX28: Audio joins A/B in the right floating queue stack.
         self.audio_tray_host=self.sidebar.sections['Music']['frame']
         self.audio_tray_open=False
@@ -1416,7 +1423,7 @@ class OmneWorkspace(CompositionQueueActions,MediaPlacementActions,ChannelCameraA
         # Two distinct horizontal areas: performance on left, source pairs at
         # the right edge directly above their collapsible right-hand dock.
         row=ttk.Frame(root);row.grid(row=0,column=0,sticky='ew',pady=(0,3))
-        row.columnconfigure(0,weight=1)
+        row.columnconfigure(0,weight=0,minsize=330)
         self.top_row=row
         top=PriorityToolbar(row,gap=4);self.global_toolbar=top
         top.grid(row=0,column=0,sticky='ew')
@@ -1465,6 +1472,36 @@ class OmneWorkspace(CompositionQueueActions,MediaPlacementActions,ChannelCameraA
                            (self.application_button,'Project, import, save, export and settings.'),
                            (self.media_sources_button,'Browse files, cameras, screen capture and audio sources directly.')):
             self.add_tip(widget,tip)
+
+    def _reflow_performance_bar(self,event=None):
+        """Protect File/Effects/Sources and CAM/queue toggles first.
+
+        The center mixer yields its excess width and moves to a second line
+        when the three groups do not fit. Widget identity never changes.
+        """
+        if not hasattr(self,'visual_mix'):return
+        row=self.top_row
+        width=event.width if event is not None else row.winfo_width()
+        if width<=1:return
+        left=max(330,self.global_toolbar.winfo_reqwidth())
+        right=self.top_source_host.winfo_reqwidth()
+        available=max(1,width-left-right-22)
+        # A mixer on one line needs enough room for record/output/focus and
+        # at least one row of transition controls. Otherwise wrap below.
+        stacked=(available<510)
+        if stacked:
+            config={'row':1,'column':0,'columnspan':3,'sticky':'ew','padx':(1,1),'pady':(2,0)}
+            mix_width=max(300,width-12)
+        else:
+            config={'row':0,'column':1,'columnspan':1,'sticky':'ew','padx':(4,5),'pady':(0,0)}
+            mix_width=available
+        last=getattr(self,'_ux43_performance_layout',None)
+        current=(stacked,int(mix_width//8))
+        if current==last:return
+        self._ux43_performance_layout=current
+        self.visual_mix.grid_configure(**config)
+        self.visual_mix.configure(width=mix_width,height=120 if mix_width<470 else 98 if mix_width<850 else 76)
+        self.visual_mix.after_idle(self.visual_mix._reflow)
 
     def source_disclosure(self,kind):
         menu=tk.Menu(self,tearoff=False)

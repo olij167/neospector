@@ -21,9 +21,14 @@ cp -a "$SRC/." "$PKG/usr/share/neospector/release/"
 cat > "$PKG/usr/bin/neospector" <<'LAUNCHER'
 #!/usr/bin/env bash
 set -euo pipefail
-VERSION='0.7.25-ux41'
+VERSION='@VERSION@'
 SOURCE='/usr/share/neospector/release'
-DEST="${XDG_DATA_HOME:-$HOME/.local/share}/neospector/versions/$VERSION"
+MANAGED="${XDG_DATA_HOME:-$HOME/.local/share}/omne/neospector"
+# Approved signed updates are installed into the managed version directory.
+if [[ -f "$MANAGED/current.json" && -x "$MANAGED/launch.sh" ]]; then
+  exec "$MANAGED/launch.sh" "$@"
+fi
+DEST="$MANAGED/versions/$VERSION"
 if [[ ! -f "$DEST/MANIFEST.sha256" ]]; then
   command -v python3 >/dev/null || { echo 'Python 3 required' >&2; exit 2; }
   PARENT="$(dirname "$DEST")";mkdir -p "$PARENT"
@@ -37,8 +42,20 @@ if [[ ! -f "$DEST/MANIFEST.sha256" ]]; then
   trap - EXIT
 fi
 cd "$DEST"
+# The initial DEB install also uses the managed launch path.
+mkdir -p "$MANAGED"
+python3 - "$MANAGED/current.json" "$VERSION" <<'PYPOINTER'
+import json,sys,os,tempfile
+from pathlib import Path
+p=Path(sys.argv[1]);v=sys.argv[2]
+if not p.exists():
+ with tempfile.NamedTemporaryFile('w',dir=p.parent,prefix='.launch-',delete=False) as f:
+  json.dump({'version':v, 'previous':None},f);f.write('\n');temp=f.name
+ os.replace(temp,p)
+PYPOINTER
 exec bash "$DEST/RUN_POC.sh" "$@"
 LAUNCHER
+sed -i "s/@VERSION@/${VERSION}/g" "$PKG/usr/bin/neospector"
 chmod 0755 "$PKG/usr/bin/neospector"
 cat > "$PKG/usr/share/applications/neospector.desktop" <<'DESKTOP'
 [Desktop Entry]
@@ -61,13 +78,13 @@ Section: video
 Priority: optional
 Maintainer: Pungent Funk <support@omne.space>
 Homepage: https://omne.space/downloads/neospector
-Depends: python3 (>= 3.10), python3-venv, python3-tk, ffmpeg, ca-certificates
+Depends: python3 (>= 3.11), python3-venv, python3-tk, ffmpeg, ca-certificates
 Installed-Size: $SIZE
 Description: Neospector local-first audiovisual instrument
  Neospector by Pungent Funk. First launch provisions a separate user-owned
  version from verified bundled source and Python wheels. Requires Xorg x64.
 EOF
-OUT="$ROOT/artifacts/Neospector_0.7.25-ux41_linux-x64.deb"
+OUT="$ROOT/artifacts/Neospector_${VERSION}_linux-x64.deb"
 chmod 0755 "$PKG/DEBIAN"; chmod g-s "$PKG/DEBIAN"
 dpkg-deb --root-owner-group --build "$PKG" "$OUT"
 sha256sum "$OUT" > "$OUT.sha256"

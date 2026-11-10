@@ -23,8 +23,22 @@ def canonical(payload):
     return json.dumps(payload,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
 
 def version_tuple(version):
-    if not isinstance(version,str) or not VERSION_RE.fullmatch(version):raise UpdateError('Invalid release version')
-    return tuple(int(i) for i in version.split('-',1)[0].split('.'))
+    """Comparable Neospector versions, including our numeric -uxNN release series.
+
+    A UX iteration at the same X.Y.Z outranks an earlier UX iteration.  A
+    final X.Y.Z without a suffix outranks UX prereleases of X.Y.Z.
+    Unknown prerelease labels are rejected rather than silently misordered.
+    """
+    if not isinstance(version,str) or not VERSION_RE.fullmatch(version):
+        raise UpdateError('Invalid release version')
+    core, _, prerelease = version.partition('-')
+    parts = tuple(int(part) for part in core.split('.'))
+    if not prerelease:
+        return (*parts, 2, 0)
+    m = re.fullmatch(r'ux([0-9]+)', prerelease, re.IGNORECASE)
+    if m:
+        return (*parts, 1, int(m.group(1)))
+    raise UpdateError('Unsupported release version suffix')
 
 def verify_envelope(document,public_pem):
     """Verify a signed manifest against the pinned publisher key (Ed25519)."""

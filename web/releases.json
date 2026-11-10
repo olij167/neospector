@@ -3,7 +3,7 @@
   "product": "Neospector",
   "version": "0.7.25-ux41",
   "date": "2026-11-09",
-  "publication_note": "Linux UX41 verified; native installer candidates not yet released",
+  "publication_note": "Approved downloads: linux-zip, linux",
   "downloads": {
     "linux-zip": {
       "ready": true,
@@ -12,10 +12,10 @@
       "bytes": 29088284
     },
     "linux": {
-      "ready": false,
-      "key": null,
-      "sha256": null,
-      "bytes": null
+      "ready": true,
+      "key": "neospector/releases/Neospector_0.7.25-ux41_linux-x64.deb",
+      "sha256": "7e01af68c16afb6d466a26be78e2b24793064984731d0db934399e75416852d3",
+      "bytes": 28281386
     },
     "windows-x64": {
       "ready": false,

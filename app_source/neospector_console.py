@@ -41,7 +41,7 @@ class NeospectorApp(CaptureActions,ContextTrayActions,ImmediateActions,OmneWorks
         from update_ui import UpdateController
         self.update_controller=UpdateController(self)
         if not test_mode and self.auto_check_updates:
-            self.after(2200,lambda:self.update_controller.check(silent=True) if not self.closing else None)
+            self.after(650,lambda:self.update_controller.check(silent=True) if not self.closing else None)
         if not test_mode and self.auto_import_media:
             self.after(1000,self.auto_import_folder_if_enabled)
     def read_preferences(self):

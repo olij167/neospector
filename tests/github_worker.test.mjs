@@ -5,15 +5,17 @@ import {readFileSync} from 'node:fs';
 const catalogue=JSON.parse(readFileSync(new URL('../web/releases.json',import.meta.url)));
 const payload=readFileSync(new URL('../web/stable.json',import.meta.url));
 const filename=catalogue.downloads['linux-zip'].key.split('/').at(-1);
+const linuxDeb=catalogue.downloads.linux.key.split('/').at(-1);
 const calls=[];
 const priorFetch=globalThis.fetch;
 globalThis.fetch=async (url,opts={})=>{
  const dest=String(url);calls.push({dest,method:opts.method||'GET',range:opts.headers?.get?.('range')});
- assert.match(dest,/^https:\/\/github\.com\/olij167\/neospector\/releases\/latest\/download\/[^/]+$/);
+ assert.match(dest,/^https:\/\/github\.com\/olij167\/neospector\/releases\/download\/v0\.7\.25-ux41\/[^/]+$/);
  let data;
  if(dest.endsWith('releases.json'))data=JSON.stringify(catalogue);
  else if(dest.endsWith('stable.json'))data=payload;
  else if(dest.endsWith(encodeURIComponent(filename)))data='ACCEPTED_RELEASE_TEST_BYTES';
+ else if(dest.endsWith(encodeURIComponent(linuxDeb)))data='ACCEPTED_LINUX_DEB_TEST_BYTES';
  else return new Response('missing',{status:404});
  return new Response(opts.method==='HEAD'?null:data,{status:200,headers:{'content-length':String(Buffer.byteLength(data)),'accept-ranges':'bytes'}});
 };
@@ -22,7 +24,7 @@ test('only Neospector routes resolve',async()=>{
  assert.equal(await serveNeospectorRelease(req('/waves')),null);
  assert.equal((await serveNeospectorRelease(req('/downloads/neospector'))).status,200);
 });
-test('signed feed served from latest GitHub release, never redirects viewer',async()=>{
+test('signed feed served from immutable local publication metadata, never redirects viewer',async()=>{
  let r=await serveNeospectorRelease(req('/neospector/updates/stable.json'));
  assert.equal(r.status,200);assert.equal((await r.json()).payload.version,'0.7.25-ux41');
  assert.equal(r.headers.get('location'),null);
@@ -35,7 +37,7 @@ test('update ZIP and public alias stream the exact same GitHub object',async()=>
  assert.equal(calls[1].dest,calls.at(-1).dest);
 });
 test('unpublished platforms rejected',async()=>{
- for(const id of ['linux','windows-x64','macos-x64','macos-arm64','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg']){
+ for(const id of ['windows-x64','macos-x64','macos-arm64','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg']){
   assert.equal((await serveNeospectorRelease(req('/downloads/neospector/files/latest/'+id))).status,404);
  }
 });
@@ -44,4 +46,10 @@ test('HEAD, invalid range, invalid methods, unsafe filename',async()=>{
  assert.equal((await serveNeospectorRelease(req('/downloads/neospector/files/latest/linux-zip','GET',{'Range':'bytes=1-2,3-4'}))).status,416);
  assert.equal((await serveNeospectorRelease(req('/neospector/updates/private.key'))).status,404);
  assert.equal((await serveNeospectorRelease(req('/downloads/neospector/files/latest/linux-zip','POST'))).status,405);
+});
+
+test('approved Linux DEB resolves to the exact pinned GitHub asset',async()=>{
+ const r=await serveNeospectorRelease(req('/downloads/neospector/files/latest/linux'));
+ assert.equal(r.status,200);
+ assert.equal(await r.text(),'ACCEPTED_LINUX_DEB_TEST_BYTES');
 });

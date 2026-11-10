@@ -15,5 +15,10 @@ with tempfile.TemporaryDirectory(prefix='neospector-verify-') as tmp:
     if p.returncode:raise SystemExit('Signature mismatch: '+p.stderr.decode(errors='replace'))
 cat=json.loads((ROOT/'web/releases.json').read_text());a=cat['downloads']['linux-zip']
 assert a['ready'] and a['key']=='neospector/updates/'+payload['archive'] and a['sha256']==sha and a['bytes']==payload['bytes']
-for k in ('windows-x64','macos-arm64','macos-x64','linux','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg'):assert not cat['downloads'][k]['ready'], 'Native installer incorrectly marked as live'
-print('PASS: signed UX41 manifest, archive and download alias agree; native aliases remain disabled.')
+linux=cat['downloads']['linux']
+assert linux['ready'] and linux['key']=='neospector/releases/Neospector_0.7.25-ux41_linux-x64.deb'
+assert linux['sha256']=='7e01af68c16afb6d466a26be78e2b24793064984731d0db934399e75416852d3'
+assert linux['bytes']==28281386
+for k in ('windows-x64','macos-arm64','macos-x64','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg'):
+    assert not cat['downloads'][k]['ready'], 'Unaccepted native installer incorrectly marked as live'
+print('PASS: signed UX41 manifest and Linux release catalogue agree; unaccepted platforms disabled.')

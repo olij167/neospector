@@ -52,8 +52,8 @@ def check_git_and_live(version):
     remote=cmd('git','remote','get-url','origin')
     if not re.search(r'(?:github\.com[:/])olij167/neospector(?:\.git)?$',remote):
         raise ReleaseBlocked('Git origin is not the expected Neospector GitHub repository')
-    if cmd('git','status','--porcelain'):
-        raise ReleaseBlocked('Commit source changes first (working tree is not clean)')
+    if cmd('git','status','--porcelain','--untracked-files=no'):
+        raise ReleaseBlocked('Commit tracked source changes first (working tree is not clean)')
     head=cmd('git','rev-parse','HEAD')
     if not re.fullmatch('[0-9a-f]{40}',head):raise ReleaseBlocked('Invalid Git commit identity')
     cmd('gh','auth','status')
@@ -126,7 +126,7 @@ def native_assets(options,version,*,check_native=True):
     if not assets:raise ReleaseBlocked('At least one verified native installer is required')
     return assets
 
-def verified_ci_assets(bundle_file,version,git_info):
+def verified_ci_assets(bundle_file,version,git_info,*,allow_preview=False):
     """Allow a cross-platform artifact only with a successful GitHub Actions
     run, same published commit, and native-runner validation receipts. A checkbox
     or a local JSON file alone is never sufficient evidence.
@@ -151,6 +151,9 @@ def verified_ci_assets(bundle_file,version,git_info):
     except (OwnerBlocked,OSError,ValueError,KeyError,IndexError) as exc:
         raise ReleaseBlocked('Native CI proof failed: '+str(exc)) from exc
     if set(verified)!=set(expected):raise ReleaseBlocked('Synced native platform list changed')
+    required_tier='preview' if allow_preview else 'stable'
+    if any(x.get('tier')!=required_tier for x in verified.values()):
+        raise ReleaseBlocked('Native CI trust level does not permit this publication channel')
     assets={}
     for alias,entry in verified.items():
         prior=expected[alias]

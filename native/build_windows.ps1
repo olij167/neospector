@@ -2,7 +2,7 @@ $ErrorActionPreference='Stop'
 $Root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $Root
 $Identity = Get-Content (Join-Path $Root 'app_source/release_identity.py') -Raw
-$Match=[regex]::Match($Identity,'(?m)^VERSION\s*=\s*["''](?<v>[0-9.]+-ux[0-9]+)["'']')
+$Match=[regex]::Match($Identity,'(?m)^VERSION\s*=\s*["''](?<v>[0-9]+\.[0-9]+\.[0-9]+(?:-ux[0-9]+)?)["'']')
 if (-not $Match.Success) {throw 'A prepared release version is required'}
 $Version=$Match.Groups['v'].Value
 if ($Version -eq '0.7.25-ux41') {throw 'Prepare a new release version before building an installer'}
@@ -66,4 +66,4 @@ if ($Signed) {
 Copy-Item -Force $Setup $Out
 $Destination=Join-Path $Out (Split-Path $Setup -Leaf)
 (Get-FileHash -Algorithm SHA256 $Destination).Hash.ToLower()+'  '+(Split-Path $Destination -Leaf) | Out-File -Encoding ascii -FilePath ($Destination+'.sha256')
-Write-Host ('Windows installer candidate: '+$Destination+'; '+$(if($Signed){'SIGNED'}else{'UNSIGNED / DO NOT PUBLISH'}))
+Write-Host ('Windows installer candidate: '+$Destination+'; '+$(if($Signed){'SIGNED'}else{'UNSIGNED PUBLIC TEST BUILD ONLY — not trusted for automatic updates'}))

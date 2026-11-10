@@ -1,0 +1,210 @@
+name: Neospector v1 multi-OS installer builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Stable version, e.g. 1.0.0 (shown as v1.0)'
+        type: string
+        required: true
+      platforms:
+        description: 'All platforms are mandatory for v1'
+        type: string
+        default: linux,macos,windows
+        required: true
+
+permissions:
+  contents: read
+concurrency:
+  group: neospector-v1-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+      commit: ${{ steps.verify.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce one version and all OS
+        id: verify
+        env:
+          CANDIDATE_VERSION: ${{ inputs.version }}
+          REQUESTED_PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          python3 - <<'PY'
+          import ast,json,os,pathlib,re
+          tree=ast.parse(pathlib.Path('app_source/release_identity.py').read_text())
+          v=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
+                 and any(isinstance(t,ast.Name) and t.id=='VERSION' for t in n.targets))
+          draft=json.loads(pathlib.Path('web/release_draft.json').read_text())
+          assert re.fullmatch(r'\d+\.\d+\.\d+',v),'A public test version must be stable semver'
+          assert v==os.environ['CANDIDATE_VERSION']==draft['version'],'Version mismatch'
+          assert set(os.environ['REQUESTED_PLATFORMS'].split(','))=={'linux','windows','macos'},'Every OS required'
+          PY
+          echo 'version=${{ inputs.version }}' >> "$GITHUB_OUTPUT"
+          echo 'commit=${{ github.sha }}' >> "$GITHUB_OUTPUT"
+
+  linux-x64:
+    needs: validate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and inspect Linux frozen installer
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          COMMIT: ${{ needs.validate.outputs.commit }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y python3-tk python3-venv ffmpeg xvfb xauth libgl1 libx11-6 libxext6 libxrender1
+          xvfb-run -a bash native/build_linux_frozen_deb.sh
+          DEB="artifacts/Neospector_${VERSION}_linux-x64.deb"
+          dpkg-deb -f "$DEB" Package Version Architecture
+          python3 scripts/verify_shipping.py "$DEB"
+          python3 scripts/owner_ci_receipt.py --tier preview --platform linux-x64 --version "$VERSION" \
+            --commit "$COMMIT" --file "$DEB" --runner Linux --check installer-created \
+            --check build-smoke --check shipping-audit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-native-linux-x64
+          if-no-files-found: error
+          path: |
+            artifacts/Neospector_${{ needs.validate.outputs.version }}_linux-x64.deb
+            artifacts/Neospector_${{ needs.validate.outputs.version }}_linux-x64.deb.sha256
+            artifacts/ci-receipt-linux-x64.json
+
+  windows-x64:
+    needs: validate
+    runs-on: windows-2025
+    env:
+      WINDOWS_PFX_BASE64: ${{ secrets.NEOSPECTOR_WINDOWS_PFX_BASE64 }}
+      WINDOWS_PFX_PASSWORD: ${{ secrets.NEOSPECTOR_WINDOWS_PFX_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Windows compiler and media tools
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y --no-progress
+          choco install innosetup -y --no-progress
+      - name: Optionally import trusted publisher identity
+        shell: pwsh
+        run: |
+          if ($env:WINDOWS_PFX_BASE64 -and $env:WINDOWS_PFX_PASSWORD) {
+            $pfx=Join-Path $env:RUNNER_TEMP 'owner.pfx'
+            [IO.File]::WriteAllBytes($pfx,[Convert]::FromBase64String($env:WINDOWS_PFX_BASE64))
+            try {
+              $pass=ConvertTo-SecureString $env:WINDOWS_PFX_PASSWORD -AsPlainText -Force
+              $cert=Import-PfxCertificate -FilePath $pfx -CertStoreLocation 'Cert:\CurrentUser\My' -Password $pass
+              if (-not $cert) {throw 'Signing certificate invalid'}
+              "NEOSPECTOR_WINDOWS_CERT_THUMBPRINT=$($cert.Thumbprint)" | Out-File $env:GITHUB_ENV -Append
+            } finally {Remove-Item -Force $pfx -ErrorAction SilentlyContinue}
+          } else {Write-Host 'No publisher certificate: test installer will be clearly labelled unverified.'}
+      - name: Build native Setup and inspect on Windows
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          COMMIT: ${{ needs.validate.outputs.commit }}
+        run: |
+          ./native/build_windows.ps1
+          $pkg="artifacts/Neospector_$env:VERSION`_windows-x64_Setup.exe"
+          if (-not (Test-Path $pkg)) {throw 'Missing Windows installer'}
+          if ((Get-Item $pkg).Length -lt 1024) {throw 'Windows installer unexpectedly small'}
+          $checks=@('installer-created','build-smoke')
+          if ($env:NEOSPECTOR_WINDOWS_CERT_THUMBPRINT) {
+            $sig=Get-AuthenticodeSignature $pkg
+            if ($sig.Status -ne 'Valid') {throw 'Windows Setup Authenticode validation failed'}
+            $checks+=('authenticode-valid')
+          }
+          python scripts/owner_ci_receipt.py --tier preview --platform windows-x64 --version $env:VERSION `
+            --commit $env:COMMIT --file $pkg --runner Windows `
+            --check $checks[0] --check $checks[1]
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-native-windows-x64
+          if-no-files-found: error
+          path: |
+            artifacts/Neospector_${{ needs.validate.outputs.version }}_windows-x64_Setup.exe
+            artifacts/Neospector_${{ needs.validate.outputs.version }}_windows-x64_Setup.exe.sha256
+            artifacts/ci-receipt-windows-x64.json
+
+  macos:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOS_CERT_P12: ${{ secrets.NEOSPECTOR_MACOS_CERT_P12_BASE64 }}
+      MACOS_CERT_PASSWORD: ${{ secrets.NEOSPECTOR_MACOS_CERT_PASSWORD }}
+      MACOS_KEYCHAIN_PASSWORD: ${{ secrets.NEOSPECTOR_MACOS_KEYCHAIN_PASSWORD }}
+      NEOSPECTOR_APPLE_APPLICATION_ID: ${{ secrets.NEOSPECTOR_APPLE_APPLICATION_ID }}
+      NEOSPECTOR_APPLE_INSTALLER_ID: ${{ secrets.NEOSPECTOR_APPLE_INSTALLER_ID }}
+      NEOSPECTOR_APPLE_TEAM_ID: ${{ secrets.NEOSPECTOR_APPLE_TEAM_ID }}
+      APPLE_ID: ${{ secrets.NEOSPECTOR_APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.NEOSPECTOR_APPLE_PASSWORD }}
+      NEOSPECTOR_APPLE_NOTARY_PROFILE: neospector-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install native media tools
+        run: brew install ffmpeg
+      - name: Optionally load Developer ID and notarization credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(MACOS_CERT_P12 MACOS_CERT_PASSWORD MACOS_KEYCHAIN_PASSWORD NEOSPECTOR_APPLE_APPLICATION_ID NEOSPECTOR_APPLE_INSTALLER_ID NEOSPECTOR_APPLE_TEAM_ID APPLE_ID APPLE_PASSWORD)
+          for item in "${required[@]}"; do
+            if [[ -z "${!item:-}" ]]; then
+              echo "No complete Developer ID credentials: macOS testing PKG will NOT be notarized."
+              echo 'NEOSPECTOR_APPLE_APPLICATION_ID=' >> "$GITHUB_ENV"
+              echo 'NEOSPECTOR_APPLE_INSTALLER_ID=' >> "$GITHUB_ENV"
+              echo 'NEOSPECTOR_APPLE_NOTARY_PROFILE=' >> "$GITHUB_ENV"
+              exit 0
+            fi
+          done
+          keychain="$RUNNER_TEMP/neospector-build.keychain-db"
+          printf %s "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/signing.p12"
+          security create-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$keychain"
+          security unlock-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security import "$RUNNER_TEMP/signing.p12" -k "$keychain" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/pkgbuild
+          security list-keychains -d user -s "$keychain" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$MACOS_KEYCHAIN_PASSWORD" "$keychain"
+          rm -f "$RUNNER_TEMP/signing.p12"
+          xcrun notarytool store-credentials "$NEOSPECTOR_APPLE_NOTARY_PROFILE" --apple-id "$APPLE_ID" --team-id "$NEOSPECTOR_APPLE_TEAM_ID" --password "$APPLE_PASSWORD"
+      - name: Build native PKG and inspect package structure
+        shell: bash
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          COMMIT: ${{ needs.validate.outputs.commit }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          bash native/build_macos.sh
+          pkg="artifacts/Neospector_${VERSION}_macos-${ARCH}.pkg"
+          [[ -s "$pkg" ]] || { echo "Missing macOS installer $pkg" >&2; exit 2; }
+          mkdir -p "$RUNNER_TEMP/pkg-inspection"
+          pkgutil --expand "$pkg" "$RUNNER_TEMP/pkg-inspection/contents"
+          [[ -n "$(find "$RUNNER_TEMP/pkg-inspection/contents" -maxdepth 2 -type f | head -1)" ]] || { echo 'Empty macOS package' >&2; exit 2; }
+          python3 scripts/owner_ci_receipt.py --tier preview --platform "macos-${ARCH}" --version "$VERSION" \
+            --commit "$COMMIT" --file "$pkg" --runner macOS --check installer-created --check build-smoke
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neospector-native-macos-${{ matrix.arch }}
+          if-no-files-found: error
+          path: |
+            artifacts/Neospector_${{ needs.validate.outputs.version }}_macos-${{ matrix.arch }}.pkg
+            artifacts/Neospector_${{ needs.validate.outputs.version }}_macos-${{ matrix.arch }}.pkg.sha256
+            artifacts/ci-receipt-macos-${{ matrix.arch }}.json

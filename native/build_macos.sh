@@ -38,7 +38,7 @@ else
 fi
 codesign --verify --deep --strict "$APP"
 PKG="$ROOT/artifacts/Neospector_${VERSION}_macos-${ARCH}.pkg"
-ARGS=(--component "$APP" --install-location /Applications --identifier space.omne.neospector --version "${VERSION%%-*}.${VERSION#*-ux}")
+ARGS=(--component "$APP" --install-location /Applications --identifier space.omne.neospector --version "${VERSION%%-*}")
 if [[ -n "${NEOSPECTOR_APPLE_INSTALLER_ID:-}" ]];then ARGS+=(--sign "$NEOSPECTOR_APPLE_INSTALLER_ID");fi
 pkgbuild "${ARGS[@]}" "$PKG"
 if [[ -n "${NEOSPECTOR_APPLE_APPLICATION_ID:-}" && -n "${NEOSPECTOR_APPLE_INSTALLER_ID:-}" && -n "${NEOSPECTOR_APPLE_NOTARY_PROFILE:-}" ]];then
@@ -47,6 +47,6 @@ if [[ -n "${NEOSPECTOR_APPLE_APPLICATION_ID:-}" && -n "${NEOSPECTOR_APPLE_INSTAL
   xcrun stapler validate "$PKG"
   pkgutil --check-signature "$PKG"
   spctl --assess --type install --verbose=4 "$PKG"
-else echo 'NOT NOTARISED — do not publish.' >&2;fi
+else echo 'NOT NOTARISED — PUBLIC TEST BUILD ONLY. Never place on signed automatic-update feed.' >&2;fi
 shasum -a 256 "$PKG" > "$PKG.sha256"
 echo "macOS native PKG candidate: $PKG"

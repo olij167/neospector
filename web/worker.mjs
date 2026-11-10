@@ -10,6 +10,16 @@ const ROOT = '/downloads/neospector';
 const UPDATE = '/neospector/updates/';
 const REPO = 'https://github.com/olij167/neospector/releases/download/v'+SIGNED_FEED.payload.version+'/';
 const NATIVE_REPO = SIGNED_INSTALLERS?.payload?.version ? 'https://github.com/olij167/neospector/releases/download/v'+SIGNED_INSTALLERS.payload.version+'/' : null;
+const TEST_TAG = RELEASE_CATALOGUE?.release_stage === 'public-test' && /^v\d+\.\d+\.\d+$/.test(RELEASE_CATALOGUE.preview_tag||'') ? RELEASE_CATALOGUE.preview_tag : null;
+export function testingAssetRepo(catalogue,id,record){
+  if(catalogue?.release_stage!=='public-test'||record?.stage!=='public-test')return null;
+  if(!['linux','windows-x64','macos-arm64-pkg','macos-x64-pkg'].includes(id))return null;
+  const tag=catalogue?.preview_tag;
+  if(typeof tag!=='string'||!/^v\d+\.\d+\.\d+$/.test(tag)||record?.release_tag!==tag)return null;
+  if(typeof record.key!=='string'||!/^neospector\/releases\/Neospector_[A-Za-z0-9_.-]+\.(?:deb|exe|pkg)$/.test(record.key))return null;
+  return 'https://github.com/olij167/neospector/releases/download/'+tag+'/';
+}
+
 const ALIASES = new Set(['linux','linux-zip','windows-x64','macos-arm64','macos-x64','windows-x64-portable','macos-arm64-pkg','macos-x64-pkg']);
 const FILENAME = /^Neospector_[A-Za-z0-9_.-]+\.(?:zip|deb|exe|dmg|pkg)$/;
 const SECURITY = {'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'};
@@ -49,7 +59,7 @@ function localJson(request,data){
 }
 function esc(s){return String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
 function changelogPage(){
- const entries=(RELEASE_CATALOGUE.history||[]).map(x=>`<article><h2>${esc(x.version)} — ${esc(x.title)}</h2><small>${esc(x.date)}</small><p>${esc(x.notes).replaceAll('\n','<br>')}</p></article>`).join('')||'<p>Release history will appear here after the first native installer publication.</p>';
+ const entries=(RELEASE_CATALOGUE.history||[]).map(x=>`<article><h2>${esc(x.version)} — ${esc(x.title)}</h2><small>${esc(x.date)}${x.stage==='public-test'?' · PUBLIC TEST BUILD':''}</small><p>${esc(x.notes).replaceAll('\n','<br>')}</p></article>`).join('')||'<p>Release history will appear here after the first native installer publication.</p>';
  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Neospector — Update log</title><style>body{background:#110f17;color:#eee7f4;font:16px system-ui;margin:auto;max-width:800px;padding:32px}a{color:#dec177}article{border-top:1px solid #514359;padding:18px 0}small{color:#bdb0c5}p{line-height:1.6;white-space:normal}</style></head><body><a href="/downloads/neospector">Neospector downloads</a><h1>Update log</h1>${entries}</body></html>`;
 }
 export async function serveNeospectorRelease(request){
@@ -87,6 +97,11 @@ export async function serveNeospectorRelease(request){
   if(rec?.ready!==true||!rec?.sha256||!Number.isSafeInteger(rec.bytes)||rec.bytes<=0)return result('Not Found',404);
   const name=fileName(rec.key?.split('/').at(-1));
   if(!name)return result('Not Found',404);
+  if(rec?.stage==='public-test'){
+    const repo=testingAssetRepo(RELEASE_CATALOGUE,id,rec);
+    if(!repo)return result('Not Found',404);
+    return upstream(request,name,{download:true,repo});
+  }
   return upstream(request,name,{download:true,repo:NATIVE_REPO&&name.endsWith('.zip')===false&&RELEASE_CATALOGUE.version===SIGNED_INSTALLERS?.payload?.version?NATIVE_REPO:REPO});
  }
  return result('Not Found',404);

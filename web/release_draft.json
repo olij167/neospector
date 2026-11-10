@@ -1,5 +1,5 @@
 {
-  "version": "0.7.25-ux42",
+  "version": "1.0.0",
   "title": "Neospector First Release",
   "notes": "I haven't tested the windows or mac ports, but it should work on linux!"
 }

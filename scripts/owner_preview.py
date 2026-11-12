@@ -65,8 +65,8 @@ def preview_publication(repo, version, title, notes, bundle_file, *, publish=Fal
     if source_version() != version:
         raise ReleaseBlocked('Prepare & Push the selected source version first')
     draft = json.loads((repo/'web/release_draft.json').read_text())
-    if draft != dict(version=version, title=title.strip(), notes=notes.strip()):
-        raise ReleaseBlocked('Release draft differs from committed version/name/notes')
+    if draft.get('version') != version:
+        raise ReleaseBlocked('Release draft version differs from the built application version')
     git_info = check_git_and_live(version)
     assets = verified_ci_assets(bundle_file, version, git_info, allow_preview=True)
     if set(assets) != REQUIRED:

@@ -8,15 +8,20 @@ on:
         type: string
         required: true
       platforms:
-        description: 'All platforms are mandatory for v1'
+        description: 'Operating systems to build (comma separated)'
         type: string
         default: linux,macos,windows
+        required: true
+      macos_arches:
+        description: 'macOS architectures: arm64, x64, or both'
+        type: string
+        default: arm64,x64
         required: true
 
 permissions:
   contents: read
 concurrency:
-  group: neospector-v1-${{ github.ref }}-${{ inputs.version }}
+  group: neospector-v1-${{ github.ref }}-${{ inputs.version }}-${{ inputs.platforms }}-${{ inputs.macos_arches }}
   cancel-in-progress: false
 
 jobs:
@@ -25,6 +30,7 @@ jobs:
     outputs:
       version: ${{ steps.verify.outputs.version }}
       commit: ${{ steps.verify.outputs.commit }}
+      macos_matrix: ${{ steps.verify.outputs.macos_matrix }}
     steps:
       - uses: actions/checkout@v4
       - name: Enforce one version and all OS
@@ -32,6 +38,7 @@ jobs:
         env:
           CANDIDATE_VERSION: ${{ inputs.version }}
           REQUESTED_PLATFORMS: ${{ inputs.platforms }}
+          REQUESTED_MACOS_ARCHES: ${{ inputs.macos_arches }}
         run: |
           python3 - <<'PY'
           import ast,json,os,pathlib,re
@@ -41,16 +48,26 @@ jobs:
           draft=json.loads(pathlib.Path('web/release_draft.json').read_text())
           assert re.fullmatch(r'\d+\.\d+\.\d+',v),'A public test version must be stable semver'
           assert v==os.environ['CANDIDATE_VERSION']==draft['version'],'Version mismatch'
-          assert set(os.environ['REQUESTED_PLATFORMS'].split(','))=={'linux','windows','macos'},'Every OS required'
+          assert set(os.environ['REQUESTED_PLATFORMS'].split(',')) and set(os.environ['REQUESTED_PLATFORMS'].split(',')).issubset({'linux','windows','macos'}),'Unknown/empty OS target'
+          arches=set(os.environ['REQUESTED_MACOS_ARCHES'].split(','))
+          assert arches and arches.issubset({'arm64','x64'}),'Invalid macOS architecture selector'
+          configs=[{'runner':'macos-15','arch':'arm64'}] if arches=={'arm64'} else ([{'runner':'macos-15-intel','arch':'x64'}] if arches=={'x64'} else [{'runner':'macos-15','arch':'arm64'},{'runner':'macos-15-intel','arch':'x64'}])
+          with open(os.environ['GITHUB_OUTPUT'],'a') as output:output.write('macos_matrix='+json.dumps({'include':configs},separators=(',',':'))+'\n')
           PY
           echo 'version=${{ inputs.version }}' >> "$GITHUB_OUTPUT"
           echo 'commit=${{ github.sha }}' >> "$GITHUB_OUTPUT"
 
   linux-x64:
     needs: validate
+    if: contains(inputs.platforms, 'linux')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: neospector-linux-pip-${{ hashFiles('requirements*.txt', 'native/build_linux_frozen_deb.sh') }}
+          restore-keys: neospector-linux-pip-
       - name: Build and inspect Linux frozen installer
         env:
           VERSION: ${{ needs.validate.outputs.version }}
@@ -77,6 +94,7 @@ jobs:
 
   windows-x64:
     needs: validate
+    if: contains(inputs.platforms, 'windows')
     runs-on: windows-2025
     env:
       WINDOWS_PFX_BASE64: ${{ secrets.NEOSPECTOR_WINDOWS_PFX_BASE64 }}
@@ -134,14 +152,10 @@ jobs:
 
   macos:
     needs: validate
+    if: contains(inputs.platforms, 'macos')
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - runner: macos-15
-            arch: arm64
-          - runner: macos-15-intel
-            arch: x64
+      matrix: ${{ fromJSON(needs.validate.outputs.macos_matrix) }}
     runs-on: ${{ matrix.runner }}
     env:
       MACOS_CERT_P12: ${{ secrets.NEOSPECTOR_MACOS_CERT_P12_BASE64 }}

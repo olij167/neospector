@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "contract": "omne.neospector.release.v1",
+  "repository": "olij167/neospector",
+  "workflow": "neospector-native-v1.yml",
+  "owner_api": "scripts/owner_workflow.py",
+  "selective_builds": true,
+  "composed_platform_receipts": true,
+  "draft_notes_separate_from_build": true,
+  "native_platforms": {
+    "linux-x64": "linux",
+    "windows-x64": "windows",
+    "macos-arm64": "macos",
+    "macos-x64": "macos"
+  },
+  "publication_requires_all": true,
+  "public_test_auto_updates": false,
+  "version_policy": "embedded-app-version-must-match-receipts",
+  "individual_macos_architecture_builds": true
+}

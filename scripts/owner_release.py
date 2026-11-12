@@ -140,6 +140,9 @@ def verified_ci_assets(bundle_file,version,git_info,*,allow_preview=False):
     from owner_workflow import (REPO as CI_REPO,WORKFLOW_NAME,check_run,
                                 verified_assets,OwnerBlocked)
     bundle=json.loads(Path(bundle_file).expanduser().read_text(encoding='utf-8'))
+    if bundle.get('schema')==2:
+        from owner_verified_multi import verify_multi_bundle
+        return verify_multi_bundle(bundle_file,version,git_info,allow_preview=allow_preview)
     if (bundle.get('schema')!=1 or bundle.get('repository')!=CI_REPO
         or bundle.get('workflow')!=WORKFLOW_NAME or bundle.get('version')!=version
         or bundle.get('commit')!=git_info['commit']):

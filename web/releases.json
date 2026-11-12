@@ -1,27 +1,35 @@
 {
   "schema": 1,
   "product": "Neospector",
-  "version": "0.7.25-ux41",
-  "date": "2026-11-09",
-  "publication_note": "Approved downloads: linux-zip, linux",
+  "version": "1.0.0",
+  "date": "2026-11-12",
+  "publication_note": "1.0.0 public test release \u00b7 installers need platform user testing",
   "downloads": {
     "linux-zip": {
-      "ready": true,
-      "key": "neospector/updates/Neospector_UX41_Final_Reactions_PingPong_20261109.zip",
-      "sha256": "5ca7ad615db8cf45c53aaba4611f12f08542e099e099bd7ce8aeae23822358f5",
-      "bytes": 29088284
-    },
-    "linux": {
-      "ready": true,
-      "key": "neospector/releases/Neospector_0.7.25-ux41_linux-x64.deb",
-      "sha256": "7e01af68c16afb6d466a26be78e2b24793064984731d0db934399e75416852d3",
-      "bytes": 28281386
-    },
-    "windows-x64": {
       "ready": false,
       "key": null,
       "sha256": null,
       "bytes": null
+    },
+    "linux": {
+      "ready": true,
+      "key": "neospector/releases/Neospector_1.0.0_linux-x64.deb",
+      "sha256": "00ad086f246efcb8dd5d1dc4cdc738dd4c089ff89f8d689a68772bf8b3eb890a",
+      "bytes": 129335158,
+      "release_tag": "v1.0.0",
+      "stage": "public-test",
+      "trust": "unsigned-or-unnotarized",
+      "notice": "Unverified test build: OS security warnings or blocking may occur"
+    },
+    "windows-x64": {
+      "ready": true,
+      "key": "neospector/releases/Neospector_1.0.0_windows-x64_Setup.exe",
+      "sha256": "ed5e0c697cfe6265d83027e4b1e0ac2c43bafd62f3939706ddbbf80a209f18c1",
+      "bytes": 42091981,
+      "release_tag": "v1.0.0",
+      "stage": "public-test",
+      "trust": "unsigned-or-unnotarized",
+      "notice": "Unverified test build: OS security warnings or blocking may occur"
     },
     "macos-arm64": {
       "ready": false,
@@ -42,16 +50,40 @@
       "bytes": null
     },
     "macos-arm64-pkg": {
-      "ready": false,
-      "key": null,
-      "sha256": null,
-      "bytes": null
+      "ready": true,
+      "key": "neospector/releases/Neospector_1.0.0_macos-arm64.pkg",
+      "sha256": "0d9965423cc5721abba77e4dfa4e9d9914473a9498d299ec8c311e96c033ea93",
+      "bytes": 58397335,
+      "release_tag": "v1.0.0",
+      "stage": "public-test",
+      "trust": "unsigned-or-unnotarized",
+      "notice": "Unverified test build: OS security warnings or blocking may occur"
     },
     "macos-x64-pkg": {
-      "ready": false,
-      "key": null,
-      "sha256": null,
-      "bytes": null
+      "ready": true,
+      "key": "neospector/releases/Neospector_1.0.0_macos-x64.pkg",
+      "sha256": "2e21898a0a3882ff51b61e41b2531a8cbfc59cf523da056a35b29d5908077f3f",
+      "bytes": 61930095,
+      "release_tag": "v1.0.0",
+      "stage": "public-test",
+      "trust": "unsigned-or-unnotarized",
+      "notice": "Unverified test build: OS security warnings or blocking may occur"
     }
-  }
+  },
+  "title": "Neospector First Release",
+  "notes": "I haven't tested the windows or mac ports, but it should work on linux!",
+  "commit": "abca2f5c89037410554450d93cbb8379f63e201d",
+  "release_stage": "public-test",
+  "preview_tag": "v1.0.0",
+  "signed_auto_updates": false,
+  "history": [
+    {
+      "version": "1.0.0",
+      "title": "Neospector First Release",
+      "notes": "I haven't tested the windows or mac ports, but it should work on linux!",
+      "commit": "abca2f5c89037410554450d93cbb8379f63e201d",
+      "date": "2026-11-12",
+      "stage": "public-test"
+    }
+  ]
 }

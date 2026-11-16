@@ -56,6 +56,7 @@
     windows: {label:'Windows', extension:'64-bit · EXE installer'},
     macos: {label:'macOS', extension:'PKG installer'}
   };
+  const formatSize = bytes => Number.isSafeInteger(bytes) && bytes > 0 ? ' · ' + (bytes / 1048576).toFixed(1) + ' MiB' : '';
   const valid = r => r && r.ready === true && typeof r.key === 'string' &&
     /Neospector_[A-Za-z0-9_.-]+\.(deb|exe|pkg)$/.test(r.key.split('/').pop()) &&
     /^[0-9a-f]{64}$/i.test(r.sha256 || '') && Number.isSafeInteger(r.bytes) && r.bytes > 0;
@@ -99,6 +100,10 @@
     setLink(downloadButton, selectedAlias());
     setLink($('mac-download-arm64'), macAlias('macos-arm64'));
     setLink($('mac-download-x64'), macAlias('macos-x64'));
+    for (const [id,arch,label] of [['mac-download-arm64','macos-arm64','M-series · PKG'],['mac-download-x64','macos-x64','Intel Mac · PKG']]) {
+      const alias = macAlias(arch);
+      $(id).querySelector('small').textContent = label + (alias && cache[alias] ? formatSize(cache[alias].bytes) : '');
+    }
     if (selected === 'macos') {
       if (!catalogueLoaded) {
         $('selection-hint').textContent = 'Checking macOS installers…';
@@ -120,7 +125,8 @@
       return;
     }
     $('download-action').textContent = 'Download for ' + display[selected].label;
-    $('download-subtitle').textContent = display[selected].extension;
+    const available = selectedAlias() && cache[selectedAlias()];
+    $('download-subtitle').textContent = display[selected].extension + (available ? formatSize(available.bytes) : '');
     if (!catalogueLoaded) {
       $('selection-hint').textContent = 'Checking installer availability…';
       return;
@@ -140,7 +146,6 @@
   }
   function failure() {
     $('version').textContent = 'Unavailable'; $('release-stage').textContent = 'Could not verify the current public release.';
-    $('checksums').hidden = true;
     catalogueLoaded = false;
     renderDownload();
     $('selection-hint').textContent = 'Release information could not be verified. Downloads are temporarily disabled.';
@@ -154,16 +159,7 @@
       if(valid(data.downloads[alias])) cache[alias] = data.downloads[alias];
     }
     catalogueLoaded = true; renderDownload();
-    const details = $('checksum-details'); details.replaceChildren();
-    for (const alias of ['linux','windows-x64','macos-arm64-pkg','macos-x64-pkg']) {
-      const info = cache[alias]; if (!info) continue;
-      const section = document.createElement('article');
-      const name = document.createElement('strong'); name.textContent = alias;
-      const p = document.createElement('p'); p.textContent = (info.bytes/1048576).toFixed(1) + ' MiB';
-      const sha = document.createElement('code'); sha.textContent = info.sha256;
-      section.append(name,p,sha); details.append(section);
-    }
-    $('checksums').hidden = !details.children.length;
+
 
   }).catch(failure);
 })();

@@ -61,8 +61,26 @@ function localJson(request,data){
 }
 function esc(s){return String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
 function changelogPage(){
- const entries=(RELEASE_CATALOGUE.history||[]).filter(x=>!SITE_HIDDEN_HISTORY.has(x.version)).map(x=>`<article><h2>${esc(x.version)} — ${esc(x.title)}</h2><small>${esc(x.date)}${x.stage==='public-test'?' · PUBLIC TEST BUILD':''}</small><p>${esc(x.notes).replaceAll('\n','<br>')}</p></article>`).join('')||'<p>Release history will appear here after the first native installer publication.</p>';
- return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Neospector — Update log</title><style>body{background:#110f17;color:#eee7f4;font:16px system-ui;margin:auto;max-width:800px;padding:32px}a{color:#dec177}article{border-top:1px solid #514359;padding:18px 0}small{color:#bdb0c5}p{line-height:1.6;white-space:normal}</style></head><body><a href="/downloads/neospector">Neospector downloads</a><h1>Update log</h1>${entries}</body></html>`;
+ /* NEOSPECTOR-HISTORY-V2: shared neutral site visual language, no installer changes */
+ const entries=(RELEASE_CATALOGUE.history||[])
+  .filter(x=>!SITE_HIDDEN_HISTORY.has(x.version))
+  .map(x=>`<article class="entry"><div class="entry-head"><h2>v${esc(x.version)} · ${esc(x.title)}</h2><time>${esc(x.date)}</time></div>${x.stage==='public-test'?'<p class="stage">Public test release</p>':''}<p class="entry-notes">${esc(x.notes).replaceAll('\n','<br>')}</p></article>`)
+  .join('')||'<p class="empty">No public releases are listed.</p>';
+ return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#151515"><title>Neospector — Release history</title><style>
+:root{color-scheme:dark;--bg:#151515;--fg:#eeeae5;--dim:#b2adab;--line:#424044;--accent:#dfb558;font:16px/1.5 Arial,Helvetica,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg)}
+a{color:inherit;text-underline-offset:3px}a:hover{color:var(--accent)}a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.skip{position:absolute;top:-80px;background:var(--fg);color:var(--bg);padding:8px;z-index:9}.skip:focus{top:7px}
+.frame{width:min(100%,1250px);min-height:100svh;padding:0 clamp(20px,4vw,52px);margin:auto;display:grid;grid-template-rows:auto 1fr auto}
+.top{height:65px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:700;text-decoration:none;font-size:14px}
+.top nav,footer nav{display:flex;gap:22px;font-size:13px}.top nav a{text-decoration:none}.top nav a[aria-current="page"]{color:var(--accent)}
+main{width:min(100%,860px);margin:0 auto;padding:clamp(34px,7vh,90px) 0 90px}
+.eyebrow{color:var(--dim);font-size:13px;margin:0 0 9px}h1{font-size:clamp(38px,6vw,58px);letter-spacing:-.045em;line-height:1.08;margin:0 0 15px}.lead{color:var(--dim);margin:0 0 43px;font-size:15px}
+.entry{border-top:1px solid var(--line);padding:24px 0 28px}.entry-head{display:flex;align-items:baseline;gap:18px;justify-content:space-between}.entry h2{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}.entry time{color:var(--dim);font-size:13px;white-space:nowrap}
+.stage{font-size:12px;color:var(--dim);margin:6px 0 0}.entry-notes{font-size:15px;line-height:1.65;max-width:70ch;margin:18px 0 0;overflow-wrap:anywhere}.empty{color:var(--dim);border-top:1px solid var(--line);padding-top:25px}
+footer{border-top:1px solid var(--line);min-height:55px;display:flex;align-items:center;justify-content:space-between;color:var(--dim);font-size:12px;gap:12px}footer a{color:var(--dim)}
+@media(max-width:580px){.top{height:50px}.frame{padding:0 17px}.top nav{gap:14px}main{padding:36px 0 65px}.lead{margin-bottom:32px}.entry-head{display:block}.entry time{display:block;margin-top:7px}.entry h2{font-size:18px}footer nav{gap:11px}}
+</style></head><body><a class="skip" href="#main">Skip to releases</a><div class="frame"><header class="top"><a class="brand" href="https://pungentfunk.org/">Pungent Funk</a><nav aria-label="Neospector navigation"><a href="/downloads/neospector">Neospector</a><a href="/downloads/neospector/docs">Guide</a><a aria-current="page" href="/downloads/neospector/changelog">Releases</a></nav></header><main id="main"><p class="eyebrow">Neospector / Pungent Funk</p><h1>Release history</h1><p class="lead">Published versions and their release notes.</p><div class="entries">${entries}</div></main><footer><span>Neospector / Pungent Funk</span><nav><a href="/downloads/neospector">Downloads</a><a href="/downloads/neospector/docs">Documentation</a></nav></footer></div></body></html>`;
 }
 export async function serveNeospectorRelease(request){
  let url;try{url=new URL(request.url);}catch{return null;}

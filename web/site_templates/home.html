@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#151515"><meta name="description" content="Neospector is an audiovisual instrument for desktop.">
+<title>Neospector — Pungent Funk</title><style>/*SITE_STYLE*/</style>
+</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="frame">
+<header class="top"><a class="brand" href="https://pungentfunk.org/">Pungent Funk</a><nav><a href="/downloads/neospector/docs">Guide</a><a href="/downloads/neospector/changelog">Releases</a></nav></header>
+<main id="main">
+  <section class="heading-row" aria-labelledby="site-title">
+    <div class="identity"><p class="eyebrow" id="eyebrow"></p><h1 id="site-title">Neospector</h1></div>
+    <div class="description"><p class="lead" id="site-description"></p><p class="detail" id="site-detail"></p></div>
+  </section>
+  <div class="content-row">
+    <section class="media" aria-label="Neospector images and video">
+      <div id="media-frame" class="media-frame"><p class="media-empty">No images or videos added yet.</p></div>
+      <div class="media-controls" id="media-controls" hidden><button type="button" id="media-prev" aria-label="Previous media">Previous</button><span id="media-caption" aria-live="polite"></span><button type="button" id="media-next" aria-label="Next media">Next</button></div>
+    </section>
+    <section class="downloads" aria-labelledby="download-title">
+      <div class="downloads-title"><h2 id="download-title">Download Neospector</h2><span id="version">Checking…</span></div>
+      <p id="release-stage" class="stage">Checking installers…</p>
+      <fieldset class="os-picker" id="os-picker" aria-label="Choose operating system" aria-describedby="selection-hint">
+        <legend>Operating system</legend>
+        <div class="os-options">
+          <input type="radio" id="os-linux" name="download-os" value="linux"><label for="os-linux">Linux</label>
+          <input type="radio" id="os-windows" name="download-os" value="windows"><label for="os-windows">Windows</label>
+          <input type="radio" id="os-macos" name="download-os" value="macos"><label for="os-macos">macOS</label>
+        </div>
+      </fieldset>
+      <div class="mac-downloads" id="mac-downloads" role="group" aria-label="Download for macOS by processor" hidden>
+        <a class="primary-download mac-download" id="mac-download-arm64" aria-disabled="true" aria-describedby="selection-hint"><span>Apple Silicon</span><small>M-series · PKG</small></a>
+        <a class="primary-download mac-download" id="mac-download-x64" aria-disabled="true" aria-describedby="selection-hint"><span>Intel</span><small>Intel Mac · PKG</small></a>
+      </div>
+      <a class="primary-download" id="primary-download" aria-disabled="true" aria-describedby="selection-hint">
+        <span id="download-action">Checking installers…</span><small id="download-subtitle">Choose your desktop operating system</small>
+      </a>
+      <p class="selection-hint" id="selection-hint" role="status" aria-live="polite">Checking release availability…</p>
+      <p class="notice" id="public-test-note"></p>
+      <details class="checksums" id="checksums"><summary>File details / SHA-256</summary><div id="checksum-details"></div></details>
+      <p class="commerce" id="commerce" hidden></p>
+    </section>
+  </div>
+</main>
+<footer><span>Neospector / Pungent Funk</span><nav><a href="/downloads/neospector/docs">Documentation</a><a href="/downloads/neospector/changelog">Release history</a></nav></footer>
+</div>
+<script type="application/json" id="site-data">/*SITE_CONTENT*/</script>
+<script>/*SITE_SCRIPT*/</script>
+</body></html>

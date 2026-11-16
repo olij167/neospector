@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "product": "Neospector",
+  "eyebrow": "Desktop audiovisual instrument",
+  "description": "Mix video, images and live inputs. Add effects, respond to audio and record the result.",
+  "detail": "A/B visual queues, a modular effects rack and live performance controls. Runs locally on your computer.",
+  "media_interval_seconds": 7,
+  "media": [],
+  "download_heading": "Download Neospector",
+  "public_test_notice": "Public test build. Windows and macOS installers may trigger security warnings because they are not signed or notarised.",
+  "commerce": {
+    "enabled": false,
+    "label": "Purchase Neospector",
+    "url": ""
+  },
+  "hidden_history_versions": []
+}

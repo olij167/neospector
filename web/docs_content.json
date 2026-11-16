@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "title": "Neospector guide",
+  "introduction": "Instructions for a first session and a reference for the main controls. The public-test documentation is being expanded.",
+  "sections": [
+    {
+      "id": "start",
+      "title": "First session",
+      "body": "1. Import video or images into the Library, or select a camera input.\n2. Place sources into queue A or B.\n3. Add an effect to the corresponding module rack and adjust it while watching the preview.\n4. Select an audio input or file to drive audio-responsive effects.\n5. Record the output once your sources and effects are ready.",
+      "media": []
+    },
+    {
+      "id": "sources",
+      "title": "Sources and queues",
+      "body": "The Library holds imported media. Visual queues A and B control playback for their respective channels. A camera input can temporarily take over a channel.",
+      "media": []
+    },
+    {
+      "id": "effects",
+      "title": "Effects and audio",
+      "body": "Add modules to the channel rack and adjust their controls. Use the Conductor to influence effect behaviour. Start with one effect at a time to see what each control changes.",
+      "media": []
+    },
+    {
+      "id": "recording",
+      "title": "Recording",
+      "body": "Check the preview and output location before recording. Verify the recording on your own system before relying on it for a live performance.",
+      "media": []
+    },
+    {
+      "id": "installation",
+      "title": "Installation and troubleshooting",
+      "body": "Choose the installer for your operating system. Linux uses a DEB package, Windows a setup EXE, and macOS a native PKG for Apple Silicon or Intel. Public-test installers may not be signed or notarised. If the preview is blank, confirm a source is loaded and the relevant channel is playing.",
+      "media": []
+    }
+  ]
+}

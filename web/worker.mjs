@@ -4,6 +4,8 @@
  * Neospector verifies Ed25519 signatures and SHA-256 over downloaded updates.
  */
 import { DOWNLOAD_PAGE } from './download_page.mjs';
+import { DOCS_PAGE } from './docs_page.mjs';
+import { SITE_HIDDEN_HISTORY } from './site_history.mjs';
 import { SIGNED_FEED, RELEASE_CATALOGUE } from './release_data.mjs';
 import { SIGNED_INSTALLERS } from './native_release.mjs';
 const ROOT = '/downloads/neospector';
@@ -59,7 +61,7 @@ function localJson(request,data){
 }
 function esc(s){return String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
 function changelogPage(){
- const entries=(RELEASE_CATALOGUE.history||[]).map(x=>`<article><h2>${esc(x.version)} — ${esc(x.title)}</h2><small>${esc(x.date)}${x.stage==='public-test'?' · PUBLIC TEST BUILD':''}</small><p>${esc(x.notes).replaceAll('\n','<br>')}</p></article>`).join('')||'<p>Release history will appear here after the first native installer publication.</p>';
+ const entries=(RELEASE_CATALOGUE.history||[]).filter(x=>!SITE_HIDDEN_HISTORY.has(x.version)).map(x=>`<article><h2>${esc(x.version)} — ${esc(x.title)}</h2><small>${esc(x.date)}${x.stage==='public-test'?' · PUBLIC TEST BUILD':''}</small><p>${esc(x.notes).replaceAll('\n','<br>')}</p></article>`).join('')||'<p>Release history will appear here after the first native installer publication.</p>';
  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Neospector — Update log</title><style>body{background:#110f17;color:#eee7f4;font:16px system-ui;margin:auto;max-width:800px;padding:32px}a{color:#dec177}article{border-top:1px solid #514359;padding:18px 0}small{color:#bdb0c5}p{line-height:1.6;white-space:normal}</style></head><body><a href="/downloads/neospector">Neospector downloads</a><h1>Update log</h1>${entries}</body></html>`;
 }
 export async function serveNeospectorRelease(request){
@@ -67,8 +69,22 @@ export async function serveNeospectorRelease(request){
  const path=url.pathname;
  if(!isDownload(path)&&!path.startsWith(UPDATE))return null;
  if(!['GET','HEAD'].includes(request.method))return result('Method Not Allowed',405,{Allow:'GET, HEAD'});
- if(path===ROOT||path===ROOT+'/')return result(request.method==='HEAD'?null:DOWNLOAD_PAGE,200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'"});
+ if(path.startsWith(ROOT+'/media/')){
+  const filename=path.slice((ROOT+'/media/').length);
+  if(!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.(?:webp|png|jpg|jpeg|gif|mp4|webm)$/i.test(filename)||filename.includes('..'))return result('Not Found',404);
+  const type={webp:'image/webp',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',mp4:'video/mp4',webm:'video/webm'}[filename.split('.').pop().toLowerCase()];
+  const headers=new Headers();const range=request.headers.get('Range');
+  if(range){if(!/^bytes=(?:\d+-\d*|-\d+)$/.test(range))return result('Invalid Range',416);headers.set('Range',range);}
+  let upstreamMedia;
+  try{upstreamMedia=await fetch('https://raw.githubusercontent.com/olij167/neospector/main/web/site_media/'+encodeURIComponent(filename),{method:request.method,headers,redirect:'follow'});}catch{return result('Media host unavailable',503);}
+  if(!upstreamMedia.ok)return result('Media not available',upstreamMedia.status===404?404:503);
+  const outputHeaders={'Content-Type':type,'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'};
+  for(const key of ['Content-Length','Content-Range','Accept-Ranges']){const value=upstreamMedia.headers.get(key);if(value)outputHeaders[key]=value;}
+  return result(request.method==='HEAD'?null:upstreamMedia.body,upstreamMedia.status,outputHeaders);
+ }
+ if(path===ROOT||path===ROOT+'/')return result(request.method==='HEAD'?null:DOWNLOAD_PAGE,200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'"});
  if(path===ROOT+'/releases.json')return localJson(request,RELEASE_CATALOGUE);
+ if(path===ROOT+'/docs'||path===ROOT+'/docs/')return result(request.method==='HEAD'?null:DOCS_PAGE,200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'"});
  if(path===ROOT+'/changelog.json')return localJson(request,RELEASE_CATALOGUE.history||[]);
  if(path===ROOT+'/changelog')return result(request.method==='HEAD'?null:changelogPage(),200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'"});
  if(path.startsWith(UPDATE)){

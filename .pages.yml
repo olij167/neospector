@@ -1,0 +1,77 @@
+# Optional Pages CMS content editor for this GitHub-backed website.
+# It edits only content and uploaded media, never release receipts or installer routing.
+media:
+  - name: site_images
+    label: Neospector screenshots
+    input: web/site_media
+    output: /downloads/neospector/media
+    extensions: [png, jpg, jpeg, webp, gif]
+    rename: safe
+content:
+  - name: homepage
+    label: Homepage
+    type: file
+    path: web/site_content.json
+    format: json
+    operations:
+      delete: false
+      rename: false
+    fields:
+      - {name: schema, label: Schema, type: number, hidden: true}
+      - {name: product, label: Product title, type: string}
+      - {name: eyebrow, label: Intro line, type: string}
+      - {name: description, label: Main description, type: text}
+      - {name: detail, label: Secondary description, type: text}
+      - {name: download_heading, label: Download heading, type: string}
+      - {name: public_test_notice, label: Download notice, type: text}
+      - {name: media_interval_seconds, label: Slideshow seconds, type: number}
+      - name: media
+        label: Hero slideshow
+        type: object
+        list: true
+        fields:
+          - {name: type, label: Type, type: select, options: {values: [image, video]}}
+          - {name: src, label: Media URL, type: string, description: 'Use /downloads/neospector/media/filename.ext. Import images in Media first.'}
+          - {name: alt, label: Description for screen readers, type: string}
+          - {name: caption, label: Caption, type: text}
+      - {name: hidden_history_versions, label: Hide older versions from changelog, type: string, list: true}
+      - name: commerce
+        type: object
+        label: Future Ko-fi controls (inactive)
+        readonly: true
+        fields:
+          - {name: enabled, type: boolean}
+          - {name: label, type: string}
+          - {name: url, type: string}
+  - name: documentation
+    label: Documentation
+    type: file
+    path: web/docs_content.json
+    format: json
+    operations:
+      delete: false
+      rename: false
+    fields:
+      - {name: schema, type: number, hidden: true}
+      - {name: title, label: Guide title, type: string}
+      - {name: introduction, label: Intro text, type: text}
+      - name: sections
+        label: Guide sections
+        type: object
+        list: true
+        fields:
+          - {name: id, label: Section slug, type: string}
+          - {name: title, label: Heading, type: string}
+          - {name: body, label: Instructions, type: text}
+          - name: media
+            label: Screenshots and clips
+            type: object
+            list: true
+            fields:
+              - {name: type, type: select, options: {values: [image, video]}}
+              - {name: src, label: Media path, type: string}
+              - {name: alt, label: Alternative text, type: string}
+              - {name: caption, type: text}
+settings:
+  content:
+    merge: true

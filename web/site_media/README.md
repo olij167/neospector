@@ -1,0 +1,1 @@
+Owner-selected images and short video clips are imported here by the Neospector Owner Companion. No generated imagery is included. Large videos should be hosted separately and linked via a future media host integration.

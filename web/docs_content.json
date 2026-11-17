@@ -1,36 +1,30 @@
 {
   "schema": 1,
-  "title": "Neospector guide",
-  "introduction": "Instructions for a first session and a reference for the main controls. The public-test documentation is being expanded.",
+  "title": "How To Use",
+  "introduction": "",
   "sections": [
     {
       "id": "start",
-      "title": "First session",
-      "body": "1. Import video or images into the Library, or select a camera input.\n2. Place sources into queue A or B.\n3. Add an effect to the corresponding module rack and adjust it while watching the preview.\n4. Select an audio input or file to drive audio-responsive effects.\n5. Record the output once your sources and effects are ready.",
+      "title": "Quick Use",
+      "body": "1. Configure your default camera, mic, and imports folder in the welcome panel.\n2. Open a new project (or click continue to instrument)\n3. Click on Cam A, Cam B, & Mic in the top right corner\n4. Toggle Reaction Off to On in the middle of the top toolbar\n5. Open the effects rack (top left corner) and select A or B\n6. Hit randomise and make some noise!",
       "media": []
     },
     {
       "id": "sources",
-      "title": "Sources and queues",
-      "body": "The Library holds imported media. Visual queues A and B control playback for their respective channels. A camera input can temporarily take over a channel.",
+      "title": "Media Sources & Queues",
+      "body": "The Media & Sources toggle is in the top left, beside the Effects toggle.\nYou can import files and assign them to the video or audio queue in the files tab.\nThe sources tab allows you to use devices & applications from your computer in the video or audio channels. You can play something immediately, up next, or add it to the end of the queue.\nThe queues can be toggled in the top right corner underneath the camera and mic toggles. The camera and mic toggles override the queues.",
       "media": []
     },
     {
       "id": "effects",
-      "title": "Effects and audio",
-      "body": "Add modules to the channel rack and adjust their controls. Use the Conductor to influence effect behaviour. Start with one effect at a time to see what each control changes.",
+      "title": "Effects Rack",
+      "body": "The Effects toggle is in the top left and opens the module rack. There are 4 racks. One for each chanel, one for the transitions, and one for the entire output.\n\nAt the top of the rack is a toolbar: Randomise changes the whole rack, mutate just changes the internal module values but keeps the current modules. Options lets you you change how many modules are selected during randomise and also how much they get mutated.\n\nEach module can be customised as granularly as you like. You can control each parameter individually, including whether it reacts to audio or not.\n\nModules can be grouped to appear as a single module and be easily reused or separated. \n\nThere are a wide range of built in presets, full docs coming soon.\n",
       "media": []
     },
     {
       "id": "recording",
-      "title": "Recording",
-      "body": "Check the preview and output location before recording. Verify the recording on your own system before relying on it for a live performance.",
-      "media": []
-    },
-    {
-      "id": "installation",
-      "title": "Installation and troubleshooting",
-      "body": "Choose the installer for your operating system. Linux uses a DEB package, Windows a setup EXE, and macOS a native PKG for Apple Silicon or Intel. Public-test installers may not be signed or notarised. If the preview is blank, confirm a source is loaded and the relevant channel is playing.",
+      "title": "Transitions",
+      "body": "The middle of the top toolbar has the transition settings. You can set it to be static, react to different audio bands from the audio queue/mic, or transition on a constant loop. You can also drag the slider to transition between the A and B channels manually. \nYou can add effects to the transition with the transition effects rack.",
       "media": []
     }
   ]

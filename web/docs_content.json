@@ -18,7 +18,7 @@
     {
       "id": "effects",
       "title": "Effects Rack",
-      "body": "The Effects toggle is in the top left and opens the module rack. There are 4 racks. One for each chanel, one for the transitions, and one for the entire output.\n\nAt the top of the rack is a toolbar: Randomise changes the whole rack, mutate just changes the internal module values but keeps the current modules. Options lets you you change how many modules are selected during randomise and also how much they get mutated.\n\nEach module can be customised as granularly as you like. You can control each parameter individually, including whether it reacts to audio or not.\n\nModules can be grouped to appear as a single module and be easily reused or separated. \n\nThere are a wide range of built in presets, full docs coming soon.\n",
+      "body": "The Effects toggle is in the top left and opens the module rack. There are 4 racks. One for each chanel, one for the transitions, and one for the entire output.\n\nAt the top of the rack is a toolbar: Randomise changes the whole rack, mutate just changes the internal module values but keeps the current modules. Options lets you you change how many modules are selected during randomise and also how much they get mutated.\n\nEach module can be customised as granularly as you like. You can control each parameter individually, including whether it reacts to audio or not.\n\nModules can be grouped to appear as a single module and be easily reused or separated. \n\nThere are a wide range of built in presets, full docs coming... eventually...\n",
       "media": []
     },
     {

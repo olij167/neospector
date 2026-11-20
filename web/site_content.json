@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "product": "Neospector",
-  "eyebrow": "Desktop audiovisual instrument",
-  "description": "Audio Reactive VFX!",
+  "eyebrow": "",
+  "description": "Audio Reactive Live VFX!",
   "detail": "Works with live inputs, files, and other applications",
   "media_interval_seconds": 7,
   "media": [],
@@ -13,5 +13,9 @@
     "label": "Purchase Neospector",
     "url": ""
   },
-  "hidden_history_versions": []
+  "hidden_history_versions": [],
+  "feedback": {
+    "enabled": false,
+    "turnstile_sitekey": ""
+  }
 }

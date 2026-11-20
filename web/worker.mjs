@@ -100,7 +100,7 @@ export async function serveNeospectorRelease(request){
   for(const key of ['Content-Length','Content-Range','Accept-Ranges']){const value=upstreamMedia.headers.get(key);if(value)outputHeaders[key]=value;}
   return result(request.method==='HEAD'?null:upstreamMedia.body,upstreamMedia.status,outputHeaders);
  }
- if(path===ROOT||path===ROOT+'/')return result(request.method==='HEAD'?null:DOWNLOAD_PAGE,200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'"});
+ if(path===ROOT||path===ROOT+'/')return result(request.method==='HEAD'?null:DOWNLOAD_PAGE,200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'"});
  if(path===ROOT+'/releases.json')return localJson(request,RELEASE_CATALOGUE);
  if(path===ROOT+'/docs'||path===ROOT+'/docs/')return result(request.method==='HEAD'?null:DOCS_PAGE,200,{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'"});
  if(path===ROOT+'/changelog.json')return localJson(request,RELEASE_CATALOGUE.history||[]);

@@ -39,24 +39,16 @@
       <p class="notice" id="public-test-note"></p>
 
       <p class="commerce" id="commerce" hidden></p>
-      <!-- feedback-console-v2: at the bottom of the existing download stack -->
+      <!-- feedback-console-v2 feedback-minimal-v3: public form has one input and one action -->
       <section class="neo-feedback" id="neo-feedback" aria-labelledby="neo-feedback-heading">
-        <div class="neo-feedback-heading"><h3 id="neo-feedback-heading">Feedback &amp; bug reports</h3><span>Public test</span></div>
-        <p class="neo-feedback-intro">Found a bug or have an idea? Send it straight to the Neospector developer.</p>
+        <h3 id="neo-feedback-heading">Feedback &amp; bug reports</h3>
         <form id="neo-feedback-form" novalidate>
-          <div class="neo-feedback-form-row">
-            <label for="neo-feedback-kind">Report type</label>
-            <select id="neo-feedback-kind"><option value="feedback">Feedback</option><option value="bug">Bug report</option></select>
-          </div>
-          <label for="neo-feedback-message">Your feedback <span class="neo-feedback-required">(required)</span></label>
-          <textarea id="neo-feedback-message" rows="4" maxlength="5000" minlength="10" required placeholder="Tell us what happened or what would make Neospector better…"></textarea>
-          <div class="neo-feedback-form-row"><label for="neo-feedback-email">Reply email <span>(optional)</span></label>
-            <input id="neo-feedback-email" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com"></div>
+          <label class="neo-feedback-sr" for="neo-feedback-message">Feedback message</label>
+          <textarea id="neo-feedback-message" rows="3" maxlength="5000" minlength="10" required placeholder="Share feedback or report a bug…"></textarea>
           <div class="neo-feedback-trap" aria-hidden="true"><label for="neo-feedback-website">Leave empty</label><input id="neo-feedback-website" tabindex="-1" autocomplete="off"></div>
           <div id="neo-feedback-turnstile"></div>
-          <div class="neo-feedback-footer"><button type="submit" id="neo-feedback-submit" disabled>Send feedback</button><span id="neo-feedback-count">0 / 5000</span></div>
-          <p class="neo-feedback-status" id="neo-feedback-status" role="status" aria-live="polite">Feedback submissions are not configured.</p>
-          <p class="neo-feedback-privacy">We store your message, optional email, basic device details and limited spam-prevention signals. No files are uploaded.</p>
+          <button type="submit" id="neo-feedback-submit" disabled>Send feedback</button>
+          <p class="neo-feedback-status" id="neo-feedback-status" role="status" aria-live="polite"></p>
         </form>
       </section>
     </section>

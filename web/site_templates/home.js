@@ -162,51 +162,50 @@
 
 
   }).catch(failure);
-  // feedback-console-v2: no payment, tracking SDK, local storage or file upload.
+  // feedback-console-v2 / feedback-minimal-v3 — no subject or reply email requested.
   (function feedbackConsole(){
     const conf=content.feedback||{};
     const form=$('neo-feedback-form'),status=$('neo-feedback-status');
     if(!form)return;
-    const submit=$('neo-feedback-submit'),message=$('neo-feedback-message'),count=$('neo-feedback-count');
+    const submit=$('neo-feedback-submit'),message=$('neo-feedback-message');
     let widgetId=null,loaded=false,busy=false,verified=false;
     const setStatus=(s,error=false)=>{status.textContent=s;status.dataset.error=error?'true':'false';};
     const ready=()=>{submit.disabled=busy||!verified;};
-    message.addEventListener('input',()=>{count.textContent=message.value.length+' / 5000';});
+    ready();
     if(conf.enabled!==true||!/^[A-Za-z0-9_-]{15,100}$/.test(conf.turnstile_sitekey||'')){
-      form.querySelectorAll('input,textarea,select,button').forEach(el=>el.disabled=true);
+      message.disabled=true;submit.disabled=true;
       setStatus('Feedback submissions are temporarily unavailable.');return;
     }
     const script=document.createElement('script');script.async=true;
     script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
     script.onload=()=>{
-      if(!window.turnstile){setStatus('Verification unavailable.',true);return;}
+      if(!window.turnstile){setStatus('Verification unavailable. Please reload.',true);return;}
       try{widgetId=window.turnstile.render('#neo-feedback-turnstile',{
         sitekey:conf.turnstile_sitekey,action:'neospector-feedback',theme:'auto',size:'flexible',
-        callback:()=>{verified=true;ready();setStatus('Ready to send.')},
-        'expired-callback':()=>{verified=false;ready();setStatus('Verification expired. Please try again.')},
-        'error-callback':()=>{verified=false;ready();setStatus('Verification unavailable. Please retry.',true)}
-      });loaded=true;}catch{setStatus('Could not initialize verification.',true);}
+        appearance:'interaction-only',
+        callback:()=>{verified=true;ready();setStatus('');},
+        'expired-callback':()=>{verified=false;ready();setStatus('Verification expired. Please retry.',true);},
+        'error-callback':()=>{verified=false;ready();setStatus('Verification unavailable. Please reload.',true);}
+      });loaded=true;}catch{setStatus('Could not initialize verification. Please reload.',true);}
     };
     script.onerror=()=>setStatus('Could not load verification. Please retry later.',true);
     document.head.append(script);
     form.addEventListener('submit',async ev=>{
       ev.preventDefault();if(busy||!loaded)return;
-      const raw=message.value.trim(),email=$('neo-feedback-email').value.trim();
-      if(raw.length<10||raw.length>5000||(email&&!$('neo-feedback-email').checkValidity())){
-        setStatus('Please enter 10–5000 characters and check the reply email.',true);return;
-      }
+      const raw=message.value.trim();
+      if(raw.length<10||raw.length>5000){setStatus('Please enter 10–5000 characters.',true);return;}
       const token=window.turnstile?.getResponse(widgetId);
       if(!token){setStatus('Complete verification before sending.',true);return;}
-      busy=true;ready();setStatus('Sending report…');
+      busy=true;ready();setStatus('Sending…');
       try{
         const platform=Array.from(document.querySelectorAll('input[name="download-os"]')).find(e=>e.checked)?.value||'unknown';
         const releaseVersion=$('version')?.textContent?.trim()||'';
         const response=await fetch('/api/neospector/feedback',{method:'POST',headers:{'content-type':'application/json'},
-          body:JSON.stringify({kind:$('neo-feedback-kind').value,message:raw,email,platform,version:releaseVersion,
+          body:JSON.stringify({kind:'feedback',message:raw,email:'',platform,version:releaseVersion,
             website:$('neo-feedback-website').value,turnstile_token:token})});
         const result=await response.json();
         if(!response.ok||result.ok!==true||!/^NS-[a-f0-9-]{36}$/i.test(result.id||''))throw Error(result.error||'Submission failed.');
-        form.reset();count.textContent='0 / 5000';setStatus('Feedback received. Reference: '+result.id);
+        form.reset();setStatus('Feedback received. Reference: '+result.id);
       }catch(error){setStatus('Could not send feedback: '+String(error.message||'Try again.'),true);}
       finally{busy=false;verified=false;ready();if(loaded&&widgetId!==null)window.turnstile.reset(widgetId);}
     });

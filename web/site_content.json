@@ -15,7 +15,7 @@
   },
   "hidden_history_versions": [],
   "feedback": {
-    "enabled": false,
-    "turnstile_sitekey": ""
+    "enabled": true,
+    "turnstile_sitekey": "0x4AAAAAAGJttSewBjZZV9bJ"
   }
 }

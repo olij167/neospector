@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "product": "Neospector",
-  "eyebrow": "",
+  "eyebrow": "by Pungent Funk",
   "description": "Audio Reactive Live VFX!",
   "detail": "Works with live inputs, files, and other applications",
   "media_interval_seconds": 7,
@@ -17,5 +17,10 @@
   "feedback": {
     "enabled": true,
     "turnstile_sitekey": "0x4AAAAAAGJttSewBjZZV9bJ"
+  },
+  "appearance": {
+    "accent": "#dfb558",
+    "background": "#151515",
+    "foreground": "#eeeae5"
   }
 }

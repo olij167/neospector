@@ -50,6 +50,11 @@ def validate(home, docs, media_folder=None):
         raise ValueError('History visibility must list at most 100 unique versions')
     if any(not isinstance(v,str) or not re.fullmatch(r'\d+\.\d+\.\d+',v) for v in hidden):
         raise ValueError('History visibility entries must be version numbers')
+    appearance=home.get('appearance') or {}
+    if not isinstance(appearance,dict):raise ValueError('Appearance must be an object')
+    if appearance and (set(appearance)!={'accent','background','foreground'} or
+                       any(not isinstance(v,str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',v) for v in appearance.values())):
+        raise ValueError('Appearance colors must be six-digit hexadecimal colors')
     commerce=home.get('commerce') or {}
     if commerce.get('enabled'):
         raise ValueError('Ko-fi checkout is not yet implemented; commerce.enabled must remain false')
@@ -64,11 +69,17 @@ def embed_json(obj):
 def pages(templates, home_data, docs_data):
     validate(home_data,docs_data)
     home=(templates/'home.html').read_text(encoding='utf-8')
-    home=home.replace('/*SITE_STYLE*/',(templates/'home.css').read_text(encoding='utf-8'))
+    home_style=(templates/'home.css').read_text(encoding='utf-8')
+    docs_style=(templates/'docs.css').read_text(encoding='utf-8')
+    appearance=home_data.get('appearance') or {}
+    if appearance:
+        home_style+='\n:root{--accent:'+appearance['accent']+';--bg:'+appearance['background']+';--fg:'+appearance['foreground']+'}\n'
+        docs_style+='\n:root{--gold:'+appearance['accent']+';background:'+appearance['background']+';color:'+appearance['foreground']+'}\n'
+    home=home.replace('/*SITE_STYLE*/',home_style)
     home=home.replace('/*SITE_CONTENT*/',embed_json(home_data))
     home=home.replace('/*SITE_SCRIPT*/',(templates/'home.js').read_text(encoding='utf-8'))
     docs=(templates/'docs.html').read_text(encoding='utf-8')
-    docs=docs.replace('/*DOCS_STYLE*/',(templates/'docs.css').read_text(encoding='utf-8'))
+    docs=docs.replace('/*DOCS_STYLE*/',docs_style)
     docs=docs.replace('/*DOCS_CONTENT*/',embed_json(docs_data))
     docs=docs.replace('/*DOCS_SCRIPT*/',(templates/'docs.js').read_text(encoding='utf-8'))
     return home,docs
